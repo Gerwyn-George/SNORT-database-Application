@@ -5,7 +5,24 @@ import mysql.connector
 from mysql.connector import Error
 from mysql.connector import errorcode
 
-from PySide2.QtWidgets import QStatusBar, QTableView, QHeaderView, QAbstractScrollArea, QTableWidgetItem, QHBoxLayout, QApplication, QWidget, QSizePolicy, QTabWidget, QAction, QMainWindow, QMenuBar, QMenu, QTableWidget
+from PySide2.QtWidgets import QStatusBar
+from PySide2.QtWidgets import QTableView 
+from PySide2.QtWidgets import QHeaderView
+from PySide2.QtWidgets import QAbstractScrollArea
+from PySide2.QtWidgets import QTableWidgetItem
+from PySide2.QtWidgets import QHBoxLayout
+from PySide2.QtWidgets import QApplication
+from PySide2.QtWidgets import QWidget
+from PySide2.QtWidgets import QSizePolicy
+from PySide2.QtWidgets import QTabWidget
+from PySide2.QtWidgets import QAction
+from PySide2.QtWidgets import QMainWindow
+from PySide2.QtWidgets import QMenuBar
+from PySide2.QtWidgets import QMenu
+from PySide2.QtWidgets import QTableWidget
+from PySide2.QtWidgets import QDialog
+from PySide2.QtWidgets import QMessageBox
+from PySide2.QtWidgets import QFileDialog
 
 
 #This global variable holds rule class objects.
@@ -34,12 +51,13 @@ class Rule():
 # This is the function to export rulesets, this will be modifyed as it needs to show filtered results. 
 
     def export_ruleset(self):
+        global outputfile
 
         connection = mysql.connector.connect(host="127.0.0.1",user="root",passwd="Forgotten07")
         sql_cursor = connection.cursor()
         sql_cursor.execute("SELECT rule_body FROM rules.rulesets WHERE rulestatus ='Enabled'")
 
-        Exportfile = open("test.rules", 'a')
+        Exportfile = open(outputfile, 'a')
         for x in sql_cursor:
                 Exportfile.write(str(x[0]))
 
@@ -124,8 +142,6 @@ class Rule():
                 connection.commit()
                 print('data commited')
 
-#This function is used to export the current display.
-
 #This is the datatable that is used to display the SNORT rule data. This class is used in the mainwindow below.
 class dataTable(QTableWidget):
     def __init__(self):
@@ -159,10 +175,38 @@ class MyGui(QMainWindow):
         self.create_menu()
         self.Statusbar()
         self.initial_load_data()
-        Rule.export_ruleset(self)
+        #Rule.export_ruleset(self)    
         
-     
+        
+  
+#This displays the about box. 
+    def show_about_box(self):
+        msg = QMessageBox()
+        msg.setWindowTitle("About SNORT Database Application")
+        msg.setText("SNORT Database Application created by Gerwyn George 2020.")
+        x = msg.exec_()
 
+
+#These need to be completed and refined. 
+    def show_importfile_box(self):
+        global inputfile
+        
+        filebox = QFileDialog
+        filebox.getOpenFileName(self,caption="Import Ruleset", filter="Text files(*.txt);; Rules files(*.rules)")
+        
+        if inputfile:
+                inputfile =str(inputfile[0])
+                Rule.inport_ruleset(self)
+
+#This works, needs refinement, error checking
+    def show_exportfile_box(self):
+        global outputfile
+
+        filebox = QFileDialog
+        outputfile = filebox.getSaveFileName(self,caption="Export Ruleset", filter="Text files(*.txt);; Rules files(*.rules)")
+        if outputfile:
+                outputfile = str(outputfile[0])
+                Rule.export_ruleset(self)
 
 #This specifies the top menu bar and its configuration. 
 
@@ -175,9 +219,11 @@ class MyGui(QMainWindow):
 
 #This is for the rule menu.
         importruleaction = QAction("Import Ruleset", self)
-        exportruleaction = QAction("Export Ruleset", self)
+        importruleaction.triggered.connect(self.show_importfile_box)
         
-
+        exportruleaction = QAction("Export Ruleset", self)
+        exportruleaction.triggered.connect(self.show_exportfile_box)
+        
         ruleMenu.addAction(importruleaction)
         ruleMenu.addAction(exportruleaction)
 
@@ -190,7 +236,9 @@ class MyGui(QMainWindow):
 
 #This is for the options which drop down for the Help menu.
         howtoaction = QAction("How to", self)
+
         aboutaction = QAction("About", self)
+        aboutaction.triggered.connect(self.show_about_box)
 
         helpMenu.addAction(howtoaction)
         helpMenu.addAction(aboutaction)
@@ -255,7 +303,6 @@ class MyGui(QMainWindow):
 
                 else:
                         print(error_text)
-
 
 
 app = QApplication(sys.argv)
