@@ -49,13 +49,18 @@ class database():
         self.user = "root"
         self.password = "Forgotten07"
 
+   
+        
     def connect_to_database(self):
         try:
                 self.conn = mysql.connector.connect(host=self.hostname,user=self.user,passwd=self.password)
                 if self.conn.is_connected():
                     self.cur = self.conn.cursor()
                     print("connected")
-        
+                    #This is the way you can display guis from the mygui class. 
+                    #MyGui.show_database_config_box(self) 
+                    
+                    
         except mysql.connector.Error as error_text:
         
                 if error_text.errno == errorcode.ER_ACCESS_DENIED_ERROR:
@@ -315,7 +320,16 @@ class MyGui(QMainWindow):
         self.create_menu()
         self.Statusbar()
         self.display_all_rules() 
+        
+        
 
+    def show_database_config_box(self):
+
+        hostname = str(database().hostname)
+        user = str(database().user)
+
+        msg = QMessageBox(QMessageBox.Information, "Database Configuration settings", "Currently using the following settings.\nServer IP address/hostname: %s\nUsername: %s" % (hostname,user), QMessageBox.Ok)
+        x = msg.exec_()
 
 #This displays the about box. 
     def show_about_box(self):
@@ -396,6 +410,8 @@ class MyGui(QMainWindow):
         
 #This is for the configure menu.
         serversettingsruleaction = QAction("Server Configuration", self)
+        serversettingsruleaction.triggered.connect(self.show_database_config_box)
+
         testconnectionruleaction = QAction("Test server connection",self)
 
         configMenu.addAction(serversettingsruleaction)
@@ -450,9 +466,12 @@ class MyGui(QMainWindow):
                 for col_number, item in enumerate (data_row):
                         self.table_widget.setItem(row_number,col_number,QTableWidgetItem(str(item)))
 
+    
+
 
 #This function loads the intial data into the table from the database and displays it.  
 
 app = QApplication(sys.argv)
 mygui = MyGui()
+ 
 sys.exit(app.exec_())
