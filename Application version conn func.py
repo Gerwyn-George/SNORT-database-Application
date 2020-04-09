@@ -48,24 +48,30 @@ class database():
         self.hostname = "127.0.0.1"
         self.user = "root"
         self.password = "Forgotten07"
+        self.database_name = "rules"
 
-   
-        
+        self.database_status = "Ready"
+
     def connect_to_database(self):
         try:
-                self.conn = mysql.connector.connect(host=self.hostname,user=self.user,passwd=self.password)
+                self.conn = mysql.connector.connect(host=self.hostname,user=self.user,passwd=self.password,database=self.database_name)
                 if self.conn.is_connected():
                     self.cur = self.conn.cursor()
+                 
                     print("connected")
+
                     #This is the way you can display guis from the mygui class. 
                     #MyGui.show_database_config_box(self) 
-                    
-                    
+                       
         except mysql.connector.Error as error_text:
-        
-                if error_text.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-                        print("Can not connect to database.")     
 
+                if error_text.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+                        print("Can not connect to database.") 
+                           
+
+                elif error_text.errno == errorcode.ER_BAD_DB_ERROR:
+                        MyGui.Show_no_database_found_box(self)
+                                
                 else:
                         print(error_text)
 
@@ -75,16 +81,29 @@ class database():
 
     def get_data(self,query):
         self.connect_to_database()
+        self.conn = mysql.connector.connect(host=self.hostname,user=self.user,passwd=self.password)
+        self.cur =self.conn.cursor() 
         self.cur.execute(query)
         query_result = self.cur.fetchall()
+       
         self.disconnect_from_database() 
+      
         return  query_result
     
     def execute_query(self,query):
         self.connect_to_database()
         self.cur.execute(query)
+    
         self.disconnect_from_database() 
     
+    def create_intial_database(self):
+        self.conn = mysql.connector.connect(host=self.hostname,user=self.user,passwd=self.password)
+        self.cur =self.conn.cursor()
+        self.cur.execute("CREATE DATABASE rules;")
+        self.cur.execute("CREATE TABLE rules.rulesets (id INT AUTO_INCREMENT PRIMARY KEY, rulestatus VARCHAR(255), sid VARCHAR(255), rev VARCHAR(255), action VARCHAR(255), protocol VARCHAR(255), src_network VARCHAR(255), src_port VARCHAR(255), dst_network VARCHAR(255), dst_port VARCHAR(255), rule_body TEXT(65535))")
+        self.disconnect_from_database() 
+        MyGui.Show_database_created_box(self) 
+
 
 class Rule():
 
@@ -309,7 +328,7 @@ class MyGui(QMainWindow):
         self.table_widget = dataTable()
         self.setCentralWidget(self.table_widget)
         self.table_widget.setColumnCount(11)
-        self.table_widget.setRowCount(6000)
+        self.table_widget.setRowCount(4000)
         self.table_widget.setHorizontalHeaderLabels(('ID', 'Rule status', 'Signature ID', 'Revision', 'Action', 'Protocol','Source Network', 'Source Port','Destination Network', 'Destination Port','Rule Body'))
         self.table_widget.setColumnWidth(8,120)
         self.table_widget.setColumnWidth(10,2000)
@@ -319,10 +338,8 @@ class MyGui(QMainWindow):
         
         self.create_menu()
         self.Statusbar()
-        self.display_all_rules() 
+        self.display_all_rules()
         
-        
-
     def show_database_config_box(self):
 
         hostname = str(database().hostname)
@@ -374,6 +391,25 @@ class MyGui(QMainWindow):
         msg = QMessageBox(QMessageBox.Information, "Ruleset Creation Successful", "Ruleset successfully created.",QMessageBox.Ok)
         x = msg.exec_()
 
+    def Show_no_database_found_box(self):
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Warning)
+        msg.setWindowTitle("Database not found")
+        msg.setText("Database not found. Create database with default settings?")
+        response = msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        ButtonYes = msg.button(QMessageBox.Yes)
+        ButtonNo = msg.button(QMessageBox.No)
+        x = msg.exec_() 
+
+        if msg.clickedButton() == ButtonYes:
+                database().create_intial_database() 
+        else:
+                pass 
+
+    def Show_database_created_box(self):
+        msg = QMessageBox(QMessageBox.Information, "Database created", "Initial database created successfully.", QMessageBox.Ok)
+        x = msg.exec_()
+       
 #This specifies the top menu bar and its configuration. 
 
     def create_menu(self):
@@ -429,19 +465,21 @@ class MyGui(QMainWindow):
 #This specifies the configuration for the statusbar.
 
     def Statusbar(self):
-       
+        
         status = QStatusBar()
-        status.showMessage("ready")
+        status.showMessage(database().database_status)
         self.setStatusBar(status)
 
 
     def display_all_rules(self):
 
             self.table_widget.clearContents()
+         
 
             result = database().get_data("SELECT * FROM rules.rulesets")
         
             for row_number, data_row in enumerate (result):
+               
                 for col_number, item in enumerate (data_row):
                         self.table_widget.setItem(row_number,col_number,QTableWidgetItem(str(item))) 
 
@@ -449,10 +487,11 @@ class MyGui(QMainWindow):
     def display_enabled_rules(self):
       
             self.table_widget.clearContents()
-
+           
             result = database().get_data("SELECT * FROM rules.rulesets WHERE rulestatus ='Enabled'")
 
             for row_number, data_row in enumerate (result):
+               
                 for col_number, item in enumerate (data_row):
                         self.table_widget.setItem(row_number,col_number,QTableWidgetItem(str(item)))
     
