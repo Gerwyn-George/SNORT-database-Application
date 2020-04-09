@@ -97,8 +97,6 @@ class Rule():
 
         self.exists_in_db = exists_in_db
 
-        
- 
 
     def create_initial_database(self):
         try:
@@ -151,131 +149,6 @@ class Rule():
                 else:
                         print(error_text)
     
-    def test(self):
-
-       
-
-        self.table_widget.clearContents() 
-
-        result = database().get_data("SELECT * FROM rules.rulesets")
-
-        for row_number, data_row in enumerate (result):
-            for col_number, item in enumerate (data_row):
-                    self.table_widget.setItem(row_number,col_number,QTableWidgetItem(str(item))) 
-                    print("it works")
-
-
-    def display_all_rules(self):
-      try:
-                mydb = mysql.connector.connect(
-                host="localhost",
-                user="root",
-                passwd="Forgotten07",
-                database="rules")
-
-
-                if mydb.is_connected():
-                        mycursor=mydb.cursor()
-                        mycursor.execute("SELECT * FROM rules.rulesets")
-                        result = mycursor.fetchall()
-
-                        mygui.table_widget.clearContents() 
-
-                        for row_number, data_row in enumerate (result):
-                                for col_number, item in enumerate (data_row):
-                                        mygui.table_widget.setItem(row_number,col_number,QTableWidgetItem(str(item))) 
-                        
-                        mydb.close()
-            
-      except mysql.connector.Error as error_text:
-                if error_text.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-                        print("Can not connect to database.")
-            
-                elif error_text.errno == errorcode.ER_BAD_DB_ERROR:
-                        print("Database does not exist.")
-                        self.create_initial_database()
-                        
-                else:
-                        print(error_text)
-
-    def display_enabled_rules(self):
-      try:
-                mydb = mysql.connector.connect(
-                host="localhost",
-                user="root",
-                passwd="Forgotten07",
-                database="rules")
-
-                if mydb.is_connected():
-                        mycursor=mydb.cursor()
-                        mycursor.execute("SELECT * FROM rules.rulesets WHERE rulestatus ='Enabled'")
-                        result = mycursor.fetchall()
-
-                        mygui.table_widget.clearContents() 
-
-                        for row_number, data_row in enumerate (result):
-                                for col_number, item in enumerate (data_row):
-                                        mygui.table_widget.setItem(row_number,col_number,QTableWidgetItem(str(item))) 
-                        
-                        mydb.close()
-            
-      except mysql.connector.Error as error_text:
-                if error_text.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-                        print("Can not connect to database.")
-            
-                elif error_text.errno == errorcode.ER_BAD_DB_ERROR:
-                        print("Database does not exist.")
-                        self.create_initial_database()
-                        
-                else:
-                        print(error_text)
-    
-    def display_disabled_rules(self):
-      try:
-                mydb = mysql.connector.connect(
-                host="localhost",
-                user="root",
-                passwd="Forgotten07",
-                database="rules")
-
-                if mydb.is_connected():
-                        mycursor=mydb.cursor()
-                        mycursor.execute("SELECT * FROM rules.rulesets WHERE rulestatus ='Disabled'")
-                        result = mycursor.fetchall()
-
-                        mygui.table_widget.clearContents() 
-
-                        for row_number, data_row in enumerate (result):
-                                for col_number, item in enumerate (data_row):
-                                        mygui.table_widget.setItem(row_number,col_number,QTableWidgetItem(str(item))) 
-                        
-                        mydb.close()
-            
-      except mysql.connector.Error as error_text:
-                if error_text.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-                        print("Can not connect to database.")
-            
-                elif error_text.errno == errorcode.ER_BAD_DB_ERROR:
-                        print("Database does not exist.")
-                        self.create_initial_database()
-                        
-                else:
-                        print(error_text)
-        
-        
-
-    def check_if_table_empty(self):
-
-        connection = mysql.connector.connect(host="127.0.0.1",user="root",passwd="Forgotten07")
-        sql_cursor = connection.cursor()
-        Test = sql_cursor.execute("SELECT count(*) FROM rules.rulesets")
-        connection.close()
-        
-        
-        if Test == None:
-                return True
-        else:
-                return False
 
     def transfer_to_database(self):
 
@@ -330,8 +203,6 @@ class Rule():
         connection.close()
 
         sidrev = tuple(zip(sid_list,rev_list))
-     
-        
 
     def create_list(self):
         global inputfile
@@ -414,17 +285,11 @@ class Rule():
         MyGui.show_import_success_box(self)
         rule_list.clear()
 
-
-        
-
-#This is the datatable that is used to display the SNORT rule data. This class is used in the mainwindow below.
 class dataTable(QTableWidget):
     def __init__(self):
         super().__init__()
 
         self.show()
-
-#This is the mainwindow for the program and has all components detailing this. 
 
 class MyGui(QMainWindow):
     def __init__(self):
@@ -449,18 +314,9 @@ class MyGui(QMainWindow):
         
         self.create_menu()
         self.Statusbar()
-        #Rule.initial_load_data(self)
+        self.display_all_rules() 
 
 
-        Rule.test(self)
-        
-        #test= database().get_data("SELECT * FROM rules.rulesets WHERE rulestatus ='Enabled'")
-        #print(test) 
-
-        #Rule.export_ruleset(self) 
-        #Rule.inport_ruleset(self)
-        
-        
 #This displays the about box. 
     def show_about_box(self):
         msg = QMessageBox()
@@ -526,13 +382,13 @@ class MyGui(QMainWindow):
 
 #This is for the view menu.
         displayallrulesaction = QAction("All rules",self)
-        displayallrulesaction.triggered.connect(Rule.display_all_rules)
+        displayallrulesaction.triggered.connect(self.display_all_rules)
         
         displayenabledrulesaction = QAction("Enabled rules",self)
-        displayenabledrulesaction.triggered.connect(Rule.display_enabled_rules)
+        displayenabledrulesaction.triggered.connect(self.display_enabled_rules)
 
         displaydisabledrulesaction = QAction("Disabled rules",self)
-        displaydisabledrulesaction.triggered.connect(Rule.display_disabled_rules)
+        displaydisabledrulesaction.triggered.connect(self.display_disabled_rules)
         
         viewMenu.addAction(displayallrulesaction)
         viewMenu.addAction(displayenabledrulesaction)
@@ -561,6 +417,38 @@ class MyGui(QMainWindow):
         status = QStatusBar()
         status.showMessage("ready")
         self.setStatusBar(status)
+
+
+    def display_all_rules(self):
+
+            self.table_widget.clearContents()
+
+            result = database().get_data("SELECT * FROM rules.rulesets")
+        
+            for row_number, data_row in enumerate (result):
+                for col_number, item in enumerate (data_row):
+                        self.table_widget.setItem(row_number,col_number,QTableWidgetItem(str(item))) 
+
+    
+    def display_enabled_rules(self):
+      
+            self.table_widget.clearContents()
+
+            result = database().get_data("SELECT * FROM rules.rulesets WHERE rulestatus ='Enabled'")
+
+            for row_number, data_row in enumerate (result):
+                for col_number, item in enumerate (data_row):
+                        self.table_widget.setItem(row_number,col_number,QTableWidgetItem(str(item)))
+    
+    def display_disabled_rules(self):
+      
+            self.table_widget.clearContents()
+
+            result = database().get_data("SELECT * FROM rules.rulesets WHERE rulestatus ='Disabled'")
+
+            for row_number, data_row in enumerate (result):
+                for col_number, item in enumerate (data_row):
+                        self.table_widget.setItem(row_number,col_number,QTableWidgetItem(str(item)))
 
 
 #This function loads the intial data into the table from the database and displays it.  
