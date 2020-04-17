@@ -1,5 +1,6 @@
 import sys
 import re
+from time import sleep
 
 import mysql.connector
 from mysql.connector import Error
@@ -23,6 +24,11 @@ from PySide2.QtWidgets import QTableWidget
 from PySide2.QtWidgets import QDialog
 from PySide2.QtWidgets import QMessageBox
 from PySide2.QtWidgets import QFileDialog
+from PySide2.QtWidgets import QFormLayout
+from PySide2.QtWidgets import QLineEdit
+from PySide2.QtWidgets import QLabel
+from PySide2.QtWidgets import QGridLayout
+from PySide2.QtWidgets import QPushButton
 
 
 #This global variable holds rule class objects.
@@ -43,20 +49,23 @@ outputfile = ""
 #This class specifies all parts of the snort rule. This allows for data to be stored in memory before transfering to database.
 
 class database():
+
+    hostname = "127.0.0.1" 
+    user = "root"
+    password = "Forgotten07"
+    database_name = "rules"
+
     def __init__(self):
 
-        self.hostname = "127.0.0.1"
-        self.user = "root"
-        self.password = "Forgotten07"
-        self.database_name = "rules"
+             #snort-database-application.c5acoc6h2uoc.eu-west-2.rds.amazonaws.com"
 
         self.database_status = "Ready"
 
     def connect_to_database(self):
         try:
-                self.conn = mysql.connector.connect(host=self.hostname,user=self.user,passwd=self.password,database=self.database_name)
-                if self.conn.is_connected():
-                    self.cur = self.conn.cursor()
+                conn = mysql.connector.connect(host=self.hostname,user=self.user,passwd=self.password,database=self.database_name)
+                if conn.is_connected():
+                    cur = conn.cursor()
                  
                     print("connected")
 
@@ -76,33 +85,35 @@ class database():
                         print(error_text)
 
     def disconnect_from_database(self):
-        self.conn.close() 
+        conn = mysql.connector.connect(host=self.hostname,user=self.user,passwd=self.password,database=self.database_name)
+        conn.close() 
     
 
     def get_data(self,query):
         self.connect_to_database()
-        self.conn = mysql.connector.connect(host=self.hostname,user=self.user,passwd=self.password)
-        self.cur =self.conn.cursor() 
-        self.cur.execute(query)
-        query_result = self.cur.fetchall()
-       
+        conn = mysql.connector.connect(host=self.hostname,user=self.user,passwd=self.password,database=self.database_name)
+        cur = conn.cursor() 
+        cur.execute(query)
+        query_result = cur.fetchall()
         self.disconnect_from_database() 
       
-        return  query_result
+        #print(query_result)
+        return  query_result 
     
     def execute_query(self,query):
-        self.connect_to_database()
-        self.cur.execute(query)
-    
+        conn = mysql.connector.connect(host=self.hostname,user=self.user,passwd=self.password,database=self.database_name)
+        cur = conn.cursor()
+        cur.execute(query)
         self.disconnect_from_database() 
     
     def create_intial_database(self):
-        self.conn = mysql.connector.connect(host=self.hostname,user=self.user,passwd=self.password)
-        self.cur =self.conn.cursor()
-        self.cur.execute("CREATE DATABASE rules;")
-        self.cur.execute("CREATE TABLE rules.rulesets (id INT AUTO_INCREMENT PRIMARY KEY, rulestatus VARCHAR(255), sid VARCHAR(255), rev VARCHAR(255), action VARCHAR(255), protocol VARCHAR(255), src_network VARCHAR(255), src_port VARCHAR(255), dst_network VARCHAR(255), dst_port VARCHAR(255), rule_body TEXT(65535))")
+        conn = mysql.connector.connect(host=self.hostname,user=self.user,passwd=self.password,database=self.database_name)
+        cur = conn.cursor()
+        cur.execute("CREATE DATABASE rules;")
+        cur.execute("CREATE TABLE rules.rulesets (id INT AUTO_INCREMENT PRIMARY KEY, rulestatus VARCHAR(255), sid VARCHAR(255), rev VARCHAR(255), action VARCHAR(255), protocol VARCHAR(255), src_network VARCHAR(255), src_port VARCHAR(255), dst_network VARCHAR(255), dst_port VARCHAR(255), rule_body TEXT(65535))")
         self.disconnect_from_database() 
         MyGui.Show_database_created_box(self) 
+
 
 
 class Rule():
@@ -231,55 +242,62 @@ class Rule():
     def create_list(self):
         global inputfile
 
-        Importfile = open(inputfile, 'r')
+        try:
+
+                Importfile = open(inputfile, 'r')
+
+        except FileNotFoundError:
         
-        for line in Importfile:
+                pass 
+        else: 
+        
+                for line in Importfile:
 
-                regex_Hashes = re.findall(r'^#',line)
-                regex_emptyline = re.findall(r'^\s',line)
-                regex_sid = re.findall(r'(?<=sid:)\d+',line)
-                regex_rev = re.findall(r'(?<=rev:)\d+',line)
+                        regex_Hashes = re.findall(r'^#',line)
+                        regex_emptyline = re.findall(r'^\s',line)
+                        regex_sid = re.findall(r'(?<=sid:)\d+',line)
+                        regex_rev = re.findall(r'(?<=rev:)\d+',line)
+                                        
+                        if regex_emptyline or not regex_sid:
+                                pass
+                        
+                        else:
+                        
+                                if regex_Hashes:
+                        
+                                        rule_split = line.split(" ")
+                                        rule_status = "Disabled"
+                                        sid_int = int(regex_sid[0])
+                                        rev_int = int(regex_rev[0])
+                                        action_str = str(rule_split[1])
+                                        protocol_str = str(rule_split[2])
+                                        src_network_str = str(rule_split[3])
+                                        src_pt_str = str(rule_split[4])
+                                        dst_network_str = str(rule_split[6])
+                                        dst_network_pt_str = str(rule_split[7])
+                                        signature = str(line)
+
+
+                                        rule_list.append( Rule(rule_status, sid_int, rev_int, action_str, protocol_str, src_network_str, src_pt_str, dst_network_str, dst_network_pt_str, signature))             
+
+                                else: 
+
+                                        rule_split = line.split(" ")
+                                        rule_status = "Enabled"     
+                                        sid_int = int(regex_sid[0])
+                                        rev_int = int(regex_rev[0])
+                                        action_str = str(rule_split[0])
+                                        protocol_str = str(rule_split[1])
+                                        src_network_str = str(rule_split[2])
+                                        src_pt_str = str(rule_split[3])
+                                        dst_network_str = str(rule_split[5])
+                                        dst_network_pt_str = str(rule_split[6])
+                                        signature = str(line)
+
                                 
-                if regex_emptyline or not regex_sid:
-                        pass
+
+                                        rule_list.append( Rule(rule_status, sid_int, rev_int, action_str, protocol_str, src_network_str, src_pt_str, dst_network_str, dst_network_pt_str, signature))
                 
-                else:
-                     
-                        if regex_Hashes:
-                
-                                rule_split = line.split(" ")
-                                rule_status = "Disabled"
-                                sid_int = int(regex_sid[0])
-                                rev_int = int(regex_rev[0])
-                                action_str = str(rule_split[1])
-                                protocol_str = str(rule_split[2])
-                                src_network_str = str(rule_split[3])
-                                src_pt_str = str(rule_split[4])
-                                dst_network_str = str(rule_split[6])
-                                dst_network_pt_str = str(rule_split[7])
-                                signature = str(line)
-
-
-                                rule_list.append( Rule(rule_status, sid_int, rev_int, action_str, protocol_str, src_network_str, src_pt_str, dst_network_str, dst_network_pt_str, signature))             
-
-                        else: 
-
-                                rule_split = line.split(" ")
-                                rule_status = "Enabled"     
-                                sid_int = int(regex_sid[0])
-                                rev_int = int(regex_rev[0])
-                                action_str = str(rule_split[0])
-                                protocol_str = str(rule_split[1])
-                                src_network_str = str(rule_split[2])
-                                src_pt_str = str(rule_split[3])
-                                dst_network_str = str(rule_split[5])
-                                dst_network_pt_str = str(rule_split[6])
-                                signature = str(line)
-
-                               
-
-                                rule_list.append( Rule(rule_status, sid_int, rev_int, action_str, protocol_str, src_network_str, src_pt_str, dst_network_str, dst_network_pt_str, signature))
-          
 
     def export_ruleset(self):
         global outputfile
@@ -338,14 +356,15 @@ class MyGui(QMainWindow):
         
         self.create_menu()
         self.Statusbar()
-        self.display_all_rules()
+        self.display_all_rules() 
         
     def show_database_config_box(self):
 
         hostname = str(database().hostname)
         user = str(database().user)
+        database_name = str(database().database_name)
 
-        msg = QMessageBox(QMessageBox.Information, "Database Configuration settings", "Currently using the following settings.\nServer IP address/hostname: %s\nUsername: %s" % (hostname,user), QMessageBox.Ok)
+        msg = QMessageBox(QMessageBox.Information, "Database Configuration settings", "Currently using the following settings.\n\nServer IP address/hostname: %s\nUsername: %s\nDatabase: %s" % (hostname,user,database_name), QMessageBox.Ok)
         x = msg.exec_()
 
 #This displays the about box. 
@@ -409,7 +428,70 @@ class MyGui(QMainWindow):
     def Show_database_created_box(self):
         msg = QMessageBox(QMessageBox.Information, "Database created", "Initial database created successfully.", QMessageBox.Ok)
         x = msg.exec_()
+
+    
+
+    def modify_network_config(self):
        
+       new_host = str(self.ammend_hostname.text())
+       new_user = str(self.ammend_user.text())
+       new_database_name = str(self.ammend_database.text())
+       new_password = str(self.ammend_password.text())
+       
+       database().__class__.hostname = new_host
+       database().__class__.user = new_user 
+       database().__class__.database_name = new_database_name 
+       database().__class__.password = new_password
+       self.Config_window.close() 
+
+    def close_network_config(self):
+        self.Config_window.close()
+
+    def Configure_database_box(self):
+        self.Config_window = QWidget() 
+        self.Config_window.setWindowTitle("Configure Database")
+
+        self.okaybutton = QPushButton("OK")
+        self.okaybutton.clicked.connect(self.modify_network_config)
+
+        self.cancelButton = QPushButton("Cancel")
+        self.cancelButton.clicked.connect(self.close_network_config)
+        
+
+        self.ammend_hostname = QLineEdit() 
+        self.ammend_hostname.setText(database().hostname) 
+  
+        self.ammend_password = QLineEdit()
+        self.ammend_password.setText(database().password)
+        self.ammend_password.setEchoMode(QLineEdit.EchoMode.Password)
+
+        self.ammend_user = QLineEdit()
+        self.ammend_user.setText(database().user)
+
+        self.ammend_database = QLineEdit()
+        self.ammend_database.setText(database().database_name)
+
+        layout = QGridLayout() 
+        layout.addWidget(QLabel('Input database configuration settings'),0,0,)
+
+        layout.addWidget(QLabel('IP address / Hostname: '),1,0)
+        layout.addWidget(self.ammend_hostname,1,1,1,3)
+       
+        layout.addWidget(QLabel('Username: '),2,0)
+        layout.addWidget(self.ammend_user,2,1,1,3)
+
+        layout.addWidget(QLabel('Password: '),3,0)
+        layout.addWidget(self.ammend_password,3,1,1,3)
+
+        layout.addWidget(QLabel('Database Name: '),4,0)
+        layout.addWidget(self.ammend_database,4,1,1,3)
+
+        layout.addWidget(self.cancelButton,5,3)
+        layout.addWidget(self.okaybutton,5,2)
+
+        self.Config_window.setLayout(layout)
+        self.Config_window.show() 
+        
 #This specifies the top menu bar and its configuration. 
 
     def create_menu(self):
@@ -445,12 +527,17 @@ class MyGui(QMainWindow):
         viewMenu.addAction(displaydisabledrulesaction)
         
 #This is for the configure menu.
-        serversettingsruleaction = QAction("Server Configuration", self)
-        serversettingsruleaction.triggered.connect(self.show_database_config_box)
+        display_serversettingsruleaction = QAction("Display Database connection settings", self)
+        display_serversettingsruleaction.triggered.connect(self.show_database_config_box)
+
+        modify_serversettingsruleaction = QAction("Modify Database connection settings",self)
+        modify_serversettingsruleaction.triggered.connect(self.Configure_database_box)
+        
 
         testconnectionruleaction = QAction("Test server connection",self)
 
-        configMenu.addAction(serversettingsruleaction)
+        configMenu.addAction(modify_serversettingsruleaction)
+        configMenu.addAction(display_serversettingsruleaction)
         configMenu.addAction(testconnectionruleaction)
 
 #This is for the options which drop down for the Help menu.
