@@ -29,6 +29,11 @@ from PySide2.QtWidgets import QLineEdit
 from PySide2.QtWidgets import QLabel
 from PySide2.QtWidgets import QGridLayout
 from PySide2.QtWidgets import QPushButton
+from PySide2.QtWidgets import QDockWidget 
+from PySide2.QtWidgets import QComboBox
+
+from PySide2.QtCore import Qt
+
 
 
 #This global variable holds rule class objects.
@@ -330,8 +335,9 @@ class Rule():
 class dataTable(QTableWidget):
     def __init__(self):
         super().__init__()
-
+         
         self.show()
+
 
 class MyGui(QMainWindow):
     def __init__(self):
@@ -351,6 +357,195 @@ class MyGui(QMainWindow):
         self.table_widget.setColumnWidth(8,120)
         self.table_widget.setColumnWidth(10,2000)
         self.table_widget.verticalHeader().setVisible(False)
+
+
+
+        self.first_title_combobox = QComboBox()
+        self.first_title_combobox.addItem("")
+        self.first_title_combobox.addItem("Rule Status")
+        self.first_title_combobox.addItem("Signature ID")
+        self.first_title_combobox.addItem("Revison")
+        self.first_title_combobox.addItem("Action")
+        self.first_title_combobox.addItem("Protocol")
+        self.first_title_combobox.addItem("Source Network")
+        self.first_title_combobox.addItem("Source Port")
+        self.first_title_combobox.addItem("Destination Network")
+        self.first_title_combobox.addItem("Destination Port")
+        self.first_title_combobox.addItem("Rule Body")
+
+        self.second_title_combobox = QComboBox()
+        self.second_title_combobox.addItem("")
+        self.second_title_combobox.addItem("Rule Status")
+        self.second_title_combobox.addItem("Signature ID")
+        self.second_title_combobox.addItem("Revision")
+        self.second_title_combobox.addItem("Action")
+        self.second_title_combobox.addItem("Protocol")
+        self.second_title_combobox.addItem("Source Network")
+        self.second_title_combobox.addItem("Source Port")
+        self.second_title_combobox.addItem("Destination Network")
+        self.second_title_combobox.addItem("Desination Port")
+        self.second_title_combobox.addItem("Rule Body")
+
+        self.third_title_combobox = QComboBox()
+        self.third_title_combobox.addItem("")
+        self.third_title_combobox.addItem("Rule Status")
+        self.third_title_combobox.addItem("Signature ID")
+        self.third_title_combobox.addItem("Revision")
+        self.third_title_combobox.addItem("Action")
+        self.third_title_combobox.addItem("Protocol")
+        self.third_title_combobox.addItem("Source Network")
+        self.third_title_combobox.addItem("Source Port")
+        self.third_title_combobox.addItem("Destination Network")
+        self.third_title_combobox.addItem("Destination Port")
+        self.third_title_combobox.addItem("Rule Body") 
+
+        self.fouth_title_combobox = QComboBox()
+        self.fouth_title_combobox.addItem("") 
+        self.fouth_title_combobox.addItem("Rule Status")
+        self.fouth_title_combobox.addItem("Signature ID")
+        self.fouth_title_combobox.addItem("Revision")
+        self.fouth_title_combobox.addItem("Action")
+        self.fouth_title_combobox.addItem("Protocol")
+        self.fouth_title_combobox.addItem("Source Network")
+        self.fouth_title_combobox.addItem("Source Port")
+        self.fouth_title_combobox.addItem("Destination Network")
+        self.fouth_title_combobox.addItem("Destination Port")
+        self.fouth_title_combobox.addItem("Rule Body")
+
+        self.fifth_title_combobox = QComboBox()
+        self.fifth_title_combobox.addItem("")
+        self.fifth_title_combobox.addItem("Rule Status")
+        self.fifth_title_combobox.addItem("Signature ID")
+        self.fifth_title_combobox.addItem("Revision")
+        self.fifth_title_combobox.addItem("Action")
+        self.fifth_title_combobox.addItem("Protocol")
+        self.fifth_title_combobox.addItem("Source Network")
+        self.fifth_title_combobox.addItem("Source Port")
+        self.fifth_title_combobox.addItem("Destination Network")
+        self.fifth_title_combobox.addItem("Destination Port")
+        self.fifth_title_combobox.addItem("Rule Body") 
+
+
+        self.first_conditional_combobox = QComboBox()
+        self.first_conditional_combobox.addItem("")
+        self.first_conditional_combobox.addItem("Contains")
+        self.first_conditional_combobox.addItem("Does Not Contain")
+        self.first_conditional_combobox.addItem("Is")
+        self.first_conditional_combobox.addItem("Is not")
+
+        self.second_conditional_combobox = QComboBox() 
+        self.second_conditional_combobox.addItem("")
+        self.second_conditional_combobox.addItem("Contains")
+        self.second_conditional_combobox.addItem("Does Not Contain")
+        self.second_conditional_combobox.addItem("Is")
+        self.second_conditional_combobox.addItem("Is not")
+
+        self.third_conditional_combobox = QComboBox()
+        self.third_conditional_combobox.addItem("")
+        self.third_conditional_combobox.addItem("Contains")
+        self.third_conditional_combobox.addItem("Does Not Contain")
+        self.third_conditional_combobox.addItem("Is")
+        self.third_conditional_combobox.addItem("Is not")
+
+        self.fourth_conditional_combobox = QComboBox()
+        self.fourth_conditional_combobox.addItem("")
+        self.fourth_conditional_combobox.addItem("Contains")
+        self.fourth_conditional_combobox.addItem("Does Not Contain")
+        self.fourth_conditional_combobox.addItem("Is")
+        self.fourth_conditional_combobox.addItem("Is not")
+
+        self.fifth_conditional_combobox = QComboBox()
+        self.fifth_conditional_combobox.addItem("")
+        self.fifth_conditional_combobox.addItem("Contains")
+        self.fifth_conditional_combobox.addItem("Does Not Contain")
+        self.fifth_conditional_combobox.addItem("Is")
+        self.fifth_conditional_combobox.addItem("Is not")
+
+        self.first_search_input = QLineEdit()
+        self.second_search_input = QLineEdit()
+        self.third_search_input = QLineEdit()
+        self.fourth_search_input = QLineEdit()
+        self.fifth_search_input = QLineEdit() 
+
+        self.first_operator_combobox = QComboBox()
+        self.first_operator_combobox.addItem("")
+        self.first_operator_combobox.addItem("AND")
+        self.first_operator_combobox.addItem("OR")
+
+        self.second_operator_combobox = QComboBox()
+        self.second_operator_combobox.addItem("")
+        self.second_operator_combobox.addItem("AND")
+        self.second_operator_combobox.addItem("OR")
+
+        self.third_operator_combobox = QComboBox()
+        self.third_operator_combobox.addItem("")
+        self.third_operator_combobox.addItem("AND")
+        self.third_operator_combobox.addItem("OR")
+
+        self.fourth_operator_combobox = QComboBox()
+        self.fourth_operator_combobox.addItem("")
+        self.fourth_operator_combobox.addItem("AND")
+        self.fourth_operator_combobox.addItem("OR")
+
+        self.fifth_operator_combobox = QComboBox()
+        self.fifth_operator_combobox.addItem("")
+        self.fifth_operator_combobox.addItem("AND")
+        self.fifth_operator_combobox.addItem("OR")
+
+        self.search_filter_button = QPushButton("Filter")
+        self.search_reset_button = QPushButton("Reset")
+        self.search_reset_button.clicked.connect(self.display_all_rules)
+
+
+        self.search_engine = QWidget()
+
+        search_engine_layout = QGridLayout()
+        search_engine_layout.addWidget(self.first_title_combobox,0,0,) 
+        search_engine_layout.addWidget(self.first_conditional_combobox,0,1)
+        search_engine_layout.addWidget(self.first_search_input,0,2)
+        search_engine_layout.addWidget(self.first_operator_combobox,0,3,1,2)
+
+        search_engine_layout.addWidget(self.second_title_combobox,1,0,)
+        search_engine_layout.addWidget(self.second_conditional_combobox,1,1)
+        search_engine_layout.addWidget(self.second_search_input,1,2,)
+        search_engine_layout.addWidget(self.second_operator_combobox,1,3,1,2)
+        
+
+        search_engine_layout.addWidget(self.third_title_combobox,2,0,)
+        search_engine_layout.addWidget(self.third_conditional_combobox,2,1)
+        search_engine_layout.addWidget(self.third_search_input,2,2)
+        search_engine_layout.addWidget(self.third_operator_combobox,2,3,1,2)
+
+        search_engine_layout.addWidget(self.fouth_title_combobox,3,0,)
+        search_engine_layout.addWidget(self.fourth_conditional_combobox,3,1)
+        search_engine_layout.addWidget(self.fourth_search_input,3,2)
+        search_engine_layout.addWidget(self.fourth_operator_combobox,3,3,1,2)
+
+        search_engine_layout.addWidget(self.fifth_title_combobox,4,0,)
+        search_engine_layout.addWidget(self.fifth_conditional_combobox,4,1)
+        search_engine_layout.addWidget(self.fifth_search_input,4,2)
+        search_engine_layout.addWidget(self.fifth_operator_combobox,4,3,1,2)
+
+        search_engine_layout.addWidget(self.search_filter_button,5,4)
+        search_engine_layout.addWidget(self.search_reset_button,5,3)
+
+        self.search_engine.setLayout(search_engine_layout)
+        self.search_engine.show()
+
+
+
+#This is for the search engine element 
+
+        self.search_widget = QDockWidget("Search Engine",self)
+        self.search_widget.setFloating(False)
+        self.search_widget.setWidget(self.search_engine)
+        self.search_widget.setAllowedAreas(Qt.TopDockWidgetArea | Qt.BottomDockWidgetArea)
+        self.search_widget.setFeatures(QDockWidget.DockWidgetMovable)
+        self.addDockWidget(Qt.TopDockWidgetArea, self.search_widget) 
+
+
+        
+        
 
 #This intinates the functions in this class.  
         
@@ -591,6 +786,12 @@ class MyGui(QMainWindow):
             for row_number, data_row in enumerate (result):
                 for col_number, item in enumerate (data_row):
                         self.table_widget.setItem(row_number,col_number,QTableWidgetItem(str(item)))
+
+    def display_filtered_rules(self):
+
+           self.table_widget.clearContents()
+
+           final_Query = "" 
 
     
 
