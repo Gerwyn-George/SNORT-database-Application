@@ -32,6 +32,7 @@ from PySide2.QtWidgets import QPushButton
 from PySide2.QtWidgets import QDockWidget 
 from PySide2.QtWidgets import QComboBox
 
+
 from PySide2.QtCore import Qt
 
 
@@ -97,8 +98,8 @@ class database():
     def get_data(self,query):
         self.connect_to_database()
         conn = mysql.connector.connect(host=self.hostname,user=self.user,passwd=self.password,database=self.database_name)
-        cur = conn.cursor() 
-        cur.execute(query)
+        cur = conn.cursor(prepared=True) 
+        cur.execute(query) 
         query_result = cur.fetchall()
         self.disconnect_from_database() 
       
@@ -109,6 +110,7 @@ class database():
         conn = mysql.connector.connect(host=self.hostname,user=self.user,passwd=self.password,database=self.database_name)
         cur = conn.cursor()
         cur.execute(query)
+        
         self.disconnect_from_database() 
     
     def create_intial_database(self):
@@ -118,6 +120,8 @@ class database():
         cur.execute("CREATE TABLE rules.rulesets (id INT AUTO_INCREMENT PRIMARY KEY, rulestatus VARCHAR(255), sid VARCHAR(255), rev VARCHAR(255), action VARCHAR(255), protocol VARCHAR(255), src_network VARCHAR(255), src_port VARCHAR(255), dst_network VARCHAR(255), dst_port VARCHAR(255), rule_body TEXT(65535))")
         self.disconnect_from_database() 
         MyGui.Show_database_created_box(self) 
+
+
 
 
 
@@ -332,6 +336,376 @@ class Rule():
         MyGui.show_import_success_box(self)
         rule_list.clear()
 
+#This is all the functions for the search engine. 
+class search():
+    
+    Queryheader_1 = ""
+    Queryconditional_1 = ""
+    Querysearchinput_1 = ""
+    Queryoperational_1 = ""
+
+    Queryheader_2 = ""
+    Queryconditional_2 = ""
+    Querysearchinput_2 = ""
+    Queryoperational_2 = ""
+
+    Queryheader_3 = ""
+    Queryconditional_3 = ""
+    Querysearchinput_3 = ""
+    Queryoperational_3 = ""
+
+    Queryheader_4 = ""
+    Queryconditional_4 = ""
+    Querysearchinput_4 = ""
+    Queryoperational_4 = ""
+
+    Queryheader_5 = ""
+    Queryconditional_5 = ""
+    Querysearchinput_5 = ""
+    Queryoperational_5 = ""
+
+
+
+
+    def clear_query_input(self):
+        Queryheader_1 = ""
+        Queryconditional_1 = ""
+        Querysearchinput_1 = ""
+        Queryoperational_1 = ""
+
+        Queryheader_2 = ""
+        Queryconditional_2 = ""
+        Querysearchinput_2 = ""
+        Queryoperational_2 = ""
+
+        Queryheader_3 = ""
+        Queryconditional_3 = ""
+        Querysearchinput_3 = ""
+        Queryoperational_3 = ""
+
+        Queryheader_4 = ""
+        Queryconditional_4 = ""
+        Querysearchinput_4 = ""
+        Queryoperational_4 = ""
+
+        Queryheader_5 = ""
+        Queryconditional_5 = ""
+        Querysearchinput_5 = ""
+        Queryoperational_5 = ""
+        
+
+    def create_query_line(self):
+        
+        header1 = ""
+        header2 = ""
+        header3 = ""
+        header4 = ""
+        header5 = ""
+
+        Total_Query =""
+         
+        header1 = self.Queryheader_1
+        conditional1 = self.Queryconditional_1
+        input1 = self.Querysearchinput_1
+        operator1 = self.Queryoperational_1
+
+        header2 = self.Queryheader_2
+        conditional2 = self.Queryconditional_2
+        input2 = self.Querysearchinput_2
+        operator2 = self.Queryoperational_2
+
+        header3 = self.Queryheader_3
+        conditional3 = self.Queryconditional_3
+        input3 = self.Querysearchinput_3
+        operator3 = self.Queryoperational_3
+
+        header4 = self.Queryheader_4
+        conditional4 = self.Queryconditional_4
+        input4 = self.Querysearchinput_4
+        operator4 = self.Queryoperational_4
+
+        header5 = self.Queryheader_5 
+        conditional5 = self.Queryconditional_5 
+        input5 = self.Querysearchinput_5
+
+        if header1 == "Rule Status":
+                header1 = "rulestatus"
+                
+        if header1 == "Signature ID":
+                header1 = "sid"
+                
+        if header1 == "Revison":
+                header1 = "rev"
+                
+        if header1 == "Action":
+                header1 = "action"
+                
+        if header1 == "Protocol":
+                header1 = "protocol"
+                
+        if header1 == "Source Network":
+                header1 = "src_network"
+                
+        if header1 == "Source Port":
+                header1 = "src_port"
+                
+        if header1 == "Destination Network":
+                header1 = "dst_network"
+                
+        if header1 == "Destination Port":
+                header1 = "dst_port"
+                
+        if header1 == "Rule Body":
+                header1 = "rule_body"
+                
+        
+        if header2 == "Rule Status":
+                header2 = "rulestatus"
+                
+        if header2 == "Signature ID":
+                header2 = "sid"
+                
+        if header2 == "Revison":
+                header2 = "rev"
+                
+        if header2 == "Action":
+                header2 = "action"
+                
+        if header2 == "Protocol":
+                header2 = "protocol"
+                
+        if header2 == "Source Network":
+                header2 = "src_network"
+                
+        if header2 == "Source Port":
+                header2 = "src_port"
+                
+        if header2 == "Destination Network":
+                header2 = "dst_network"
+                
+        if header2 == "Destination Port":
+                header2 = "dst_port"
+                
+        if header2 == "Rule Body":
+                header2 = "rule_body"
+                
+
+        if header3 == "Rule Status":
+                header3 = "rulestatus"
+                
+        if header3 == "Signature ID":
+                header3 = "sid"
+                
+        if header3 == "Revison":
+                header3 = "rev"
+                
+        if header3 == "Action":
+                header3 = "action"
+                
+        if header3 == "Protocol":
+                header3 = "protocol"
+                
+        if header3 == "Source Network":
+                header3 = "src_network"
+                
+        if header3 == "Source Port":
+                header3 = "src_port"
+                
+        if header3 == "Destination Network":
+                header3 = "dst_network"
+                
+        if header3 == "Destination Port":
+                header3 = "dst_port"
+                
+        if header3 == "Rule Body":
+                header3 = "rule_body"
+                
+				
+        if header4 == "Rule Status":
+                header4 = "rulestatus"
+                
+        if header4 == "Signature ID":
+                header4 = "sid"
+                
+        if header4 == "Revison":
+                header4 = "rev"
+                
+        if header4 == "Action":
+                header4 = "action"
+                
+        if header4 == "Protocol":
+                header4 = "protocol"
+                
+        if header4 == "Source Network":
+                header4 = "src_network"
+                
+        if header4 == "Source Port":
+                header4 = "src_port"
+                
+        if header4 == "Destination Network":
+                header4 = "dst_network"
+                
+        if header4 == "Destination Port":
+                header4 = "dst_port"
+                
+        if header4 == "Rule Body":
+                header4 = "rule_body"
+                
+				
+        if header5 == "Rule Status":
+                header5 = "rulestatus"
+        
+        if header5 == "Signature ID":
+                header5 = "sid"
+        
+        if header5 == "Revison":
+                header5 = "rev"
+        
+        if header5 == "Action":
+                header5 = "action"
+        
+        if header5 == "Protocol":
+                header5 = "protocol"
+        
+        if header5 == "Source Network":
+                header5 = "src_network"
+               
+        if header5 == "Source Port":
+                header5 = "src_port"
+                
+        if header5 == "Destination Network":
+                header5 = "dst_network"
+               
+        if header5 == "Destination Port":
+                header5 = "dst_port"
+                
+        if header5 == "Rule Body":
+                header5 = "rule_body"
+                
+
+
+#Rule Status","Signature ID","Revison","Action","Protocol","Source Network","Source Port","Destination Network","Destination Port","Rule Body 
+
+        Query_AND_1 =""
+        Query_AND_2 =""
+        Query_AND_3 =""
+        Query_AND_4 =""
+
+        Query_OR_1 =""
+        Query_OR_2 =""
+        Query_OR_3 =""
+        Query_OR_4 =""
+                 
+        if header1 is "sid":
+                Total_Query = "SELECT * FROM rules.rulesets WHERE " + header1 + " " + conditional1+ " " + input1 
+        
+        elif header1 is "rev":
+                Total_Query = "SELECT * FROM rules.rulesets WHERE " + header1 + " " + conditional1+ " " + input1 
+                   
+        else:
+                Total_Query = "SELECT * FROM rules.rulesets WHERE " + header1 + " " + conditional1+ " '" + input1 + "'"
+                
+        
+        
+        if operator1 == "AND":
+
+                if header2 == "sid":
+                        Query_AND_1 = " AND " + header2 +" " +conditional2 + " " + input2
+
+                elif header2 == "rev":
+                        Query_AND_1 = " AND " + header2 +" " +conditional2 + " " + input2
+
+                else:
+                        Query_AND_1 = " AND " + header2 +" " +conditional2 + " '" + input2 + "'"
+        
+        if operator2 == "AND":
+
+                if header3 == "sid":
+                        Query_AND_2 = " AND " + header3 +" " +conditional3 + " " + input3
+
+                elif header3 == "rev":
+                        Query_AND_2 = " AND " + header3 +" " +conditional3 + " " + input3
+
+                else:
+                        Query_AND_2 = " AND " + header3 +" " +conditional3 + " '" + input3 + "'"        
+        
+        if operator3 == "AND":
+                
+                if header4 == "sid":
+                        Query_AND_3 = " AND " + header4 +" " +conditional4 + " " + input4
+
+                elif header4 == "rev":
+                        Query_AND_3 = " AND " + header4 +" " +conditional4 + " " + input4
+
+                else:
+                        Query_AND_3 = " AND " + header4 +" " +conditional4 + " '" + input4 + "'"
+        
+        if operator4 == "AND":
+               
+
+                if header5 == "sid":
+                        Query_AND_4 = " AND " + header5 +" " +conditional5 + " " + input5
+
+                elif header5 == "rev":
+                        Query_AND_4 = " AND " + header5 +" " +conditional5 + " " + input5
+
+                else:
+                        Query_AND_4 = " AND " + header5 +" " +conditional5 + " '" + input5 + "'"
+
+
+
+        if operator1 == "OR":
+
+                if header1 == "sid":
+                        Query_OR_1 = " OR " + header2 +" " +conditional2 + " " + input2
+                
+                elif header1 == "rev":
+                        Query_OR_1 = " OR " + header2 +" " +conditional2 + " " + input2 
+                
+                else:
+                        Query_OR_1 = " OR " + header2 +" " +conditional2 + " '" + input2 + "'"     
+        
+        if operator2 == "OR":
+                
+                if header3 == "sid":
+                        Query_OR_2 = " OR " + header3 +" " +conditional3 + " " + input3
+                
+                elif header3 == "rev":
+                        Query_OR_2 = " OR " + header3 +" " +conditional3 + " " + input3 
+                
+                else:
+                        Query_OR_2 = " OR " + header3 +" " +conditional3 + " '" + input3 + "'"
+        
+        if operator3 == "OR":
+
+                if header4 == "sid":
+                        Query_OR_3 = " OR " + header4 +" " +conditional4 + " " + input4
+                
+                elif header4 == "rev":
+                        Query_OR_3 = " OR " + header4 +" " +conditional4 + " " + input4 
+                
+                else:
+                        Query_OR_3 = " OR " + header4 +" " +conditional4 + " '" + input4 + "'"
+        
+        if operator4 == "OR":
+
+                if header5 == "sid":
+                        Query_OR_4 = " OR " + header5 +" " +conditional5 + " " + input5
+                
+                elif header5 == "rev":
+                        Query_OR_4 = " OR " + header5 +" " +conditional5 + " " + input5 
+                
+                else:
+                        Query_OR_4 = " OR " + header5 +" " +conditional5 + " '" + input5 + "'"
+        
+        
+        Total_Query = (Total_Query + Query_AND_1 + Query_AND_2 + Query_AND_3 + Query_AND_4 + Query_OR_1 + Query_OR_2 + Query_OR_3 + Query_OR_4)
+        
+
+        return Total_Query
+
+        
+
 class dataTable(QTableWidget):
     def __init__(self):
         super().__init__()
@@ -358,108 +732,39 @@ class MyGui(QMainWindow):
         self.table_widget.setColumnWidth(10,2000)
         self.table_widget.verticalHeader().setVisible(False)
 
-
+#This is the layout for the search engine. 
 
         self.first_title_combobox = QComboBox()
-        self.first_title_combobox.addItem("")
-        self.first_title_combobox.addItem("Rule Status")
-        self.first_title_combobox.addItem("Signature ID")
-        self.first_title_combobox.addItem("Revison")
-        self.first_title_combobox.addItem("Action")
-        self.first_title_combobox.addItem("Protocol")
-        self.first_title_combobox.addItem("Source Network")
-        self.first_title_combobox.addItem("Source Port")
-        self.first_title_combobox.addItem("Destination Network")
-        self.first_title_combobox.addItem("Destination Port")
-        self.first_title_combobox.addItem("Rule Body")
+        self.first_title_combobox.addItems(["","Rule Status","Signature ID","Revison","Action","Protocol","Source Network","Source Port","Destination Network","Destination Port","Rule Body"])
 
         self.second_title_combobox = QComboBox()
-        self.second_title_combobox.addItem("")
-        self.second_title_combobox.addItem("Rule Status")
-        self.second_title_combobox.addItem("Signature ID")
-        self.second_title_combobox.addItem("Revision")
-        self.second_title_combobox.addItem("Action")
-        self.second_title_combobox.addItem("Protocol")
-        self.second_title_combobox.addItem("Source Network")
-        self.second_title_combobox.addItem("Source Port")
-        self.second_title_combobox.addItem("Destination Network")
-        self.second_title_combobox.addItem("Desination Port")
-        self.second_title_combobox.addItem("Rule Body")
+        self.second_title_combobox.addItems(["","Rule Status","Signature ID","Revison","Action","Protocol","Source Network","Source Port","Destination Network","Destination Port","Rule Body"])
 
         self.third_title_combobox = QComboBox()
-        self.third_title_combobox.addItem("")
-        self.third_title_combobox.addItem("Rule Status")
-        self.third_title_combobox.addItem("Signature ID")
-        self.third_title_combobox.addItem("Revision")
-        self.third_title_combobox.addItem("Action")
-        self.third_title_combobox.addItem("Protocol")
-        self.third_title_combobox.addItem("Source Network")
-        self.third_title_combobox.addItem("Source Port")
-        self.third_title_combobox.addItem("Destination Network")
-        self.third_title_combobox.addItem("Destination Port")
-        self.third_title_combobox.addItem("Rule Body") 
+        self.third_title_combobox.addItems(["","Rule Status","Signature ID","Revison","Action","Protocol","Source Network","Source Port","Destination Network","Destination Port","Rule Body"])
 
         self.fouth_title_combobox = QComboBox()
-        self.fouth_title_combobox.addItem("") 
-        self.fouth_title_combobox.addItem("Rule Status")
-        self.fouth_title_combobox.addItem("Signature ID")
-        self.fouth_title_combobox.addItem("Revision")
-        self.fouth_title_combobox.addItem("Action")
-        self.fouth_title_combobox.addItem("Protocol")
-        self.fouth_title_combobox.addItem("Source Network")
-        self.fouth_title_combobox.addItem("Source Port")
-        self.fouth_title_combobox.addItem("Destination Network")
-        self.fouth_title_combobox.addItem("Destination Port")
-        self.fouth_title_combobox.addItem("Rule Body")
+        self.fouth_title_combobox.addItems(["","Rule Status","Signature ID","Revison","Action","Protocol","Source Network","Source Port","Destination Network","Destination Port","Rule Body"])
 
         self.fifth_title_combobox = QComboBox()
-        self.fifth_title_combobox.addItem("")
-        self.fifth_title_combobox.addItem("Rule Status")
-        self.fifth_title_combobox.addItem("Signature ID")
-        self.fifth_title_combobox.addItem("Revision")
-        self.fifth_title_combobox.addItem("Action")
-        self.fifth_title_combobox.addItem("Protocol")
-        self.fifth_title_combobox.addItem("Source Network")
-        self.fifth_title_combobox.addItem("Source Port")
-        self.fifth_title_combobox.addItem("Destination Network")
-        self.fifth_title_combobox.addItem("Destination Port")
-        self.fifth_title_combobox.addItem("Rule Body") 
-
+        self.fifth_title_combobox.addItems(["","Rule Status","Signature ID","Revison","Action","Protocol","Source Network","Source Port","Destination Network","Destination Port","Rule Body"])
 
         self.first_conditional_combobox = QComboBox()
-        self.first_conditional_combobox.addItem("")
-        self.first_conditional_combobox.addItem("Contains")
-        self.first_conditional_combobox.addItem("Does Not Contain")
-        self.first_conditional_combobox.addItem("Is")
-        self.first_conditional_combobox.addItem("Is not")
+        self.first_conditional_combobox.addItems(["","=","!=","<",">","<=",">="])
 
         self.second_conditional_combobox = QComboBox() 
-        self.second_conditional_combobox.addItem("")
-        self.second_conditional_combobox.addItem("Contains")
-        self.second_conditional_combobox.addItem("Does Not Contain")
-        self.second_conditional_combobox.addItem("Is")
-        self.second_conditional_combobox.addItem("Is not")
+        self.second_conditional_combobox.addItems(["","=","!=","<",">","<=",">="])
 
         self.third_conditional_combobox = QComboBox()
-        self.third_conditional_combobox.addItem("")
-        self.third_conditional_combobox.addItem("Contains")
-        self.third_conditional_combobox.addItem("Does Not Contain")
-        self.third_conditional_combobox.addItem("Is")
-        self.third_conditional_combobox.addItem("Is not")
+        self.third_conditional_combobox.addItems(["","=","!=","<",">","<=",">="])
+
 
         self.fourth_conditional_combobox = QComboBox()
-        self.fourth_conditional_combobox.addItem("")
-        self.fourth_conditional_combobox.addItem("Contains")
-        self.fourth_conditional_combobox.addItem("Does Not Contain")
-        self.fourth_conditional_combobox.addItem("Is")
-        self.fourth_conditional_combobox.addItem("Is not")
+        self.fourth_conditional_combobox.addItems(["","=","!=","<",">","<=",">="])
 
         self.fifth_conditional_combobox = QComboBox()
-        self.fifth_conditional_combobox.addItem("")
-        self.fifth_conditional_combobox.addItem("Contains")
-        self.fifth_conditional_combobox.addItem("Does Not Contain")
-        self.fifth_conditional_combobox.addItem("Is")
-        self.fifth_conditional_combobox.addItem("Is not")
+        self.fifth_conditional_combobox.addItems(["","=","!=","<",">","<=",">="])
+
 
         self.first_search_input = QLineEdit()
         self.second_search_input = QLineEdit()
@@ -468,34 +773,26 @@ class MyGui(QMainWindow):
         self.fifth_search_input = QLineEdit() 
 
         self.first_operator_combobox = QComboBox()
-        self.first_operator_combobox.addItem("")
-        self.first_operator_combobox.addItem("AND")
-        self.first_operator_combobox.addItem("OR")
-
+        self.first_operator_combobox.addItems(["","AND","OR"])
+       
         self.second_operator_combobox = QComboBox()
-        self.second_operator_combobox.addItem("")
-        self.second_operator_combobox.addItem("AND")
-        self.second_operator_combobox.addItem("OR")
+        self.second_operator_combobox.addItems(["","AND","OR"])
 
         self.third_operator_combobox = QComboBox()
-        self.third_operator_combobox.addItem("")
-        self.third_operator_combobox.addItem("AND")
-        self.third_operator_combobox.addItem("OR")
+        self.third_operator_combobox.addItems(["","AND","OR"])
 
         self.fourth_operator_combobox = QComboBox()
-        self.fourth_operator_combobox.addItem("")
-        self.fourth_operator_combobox.addItem("AND")
-        self.fourth_operator_combobox.addItem("OR")
+        self.fourth_operator_combobox.addItems(["","AND","OR"])
 
         self.fifth_operator_combobox = QComboBox()
-        self.fifth_operator_combobox.addItem("")
-        self.fifth_operator_combobox.addItem("AND")
-        self.fifth_operator_combobox.addItem("OR")
+        self.fifth_operator_combobox.addItems(["","AND","OR"])
 
         self.search_filter_button = QPushButton("Filter")
+        self.search_filter_button.clicked.connect(self.display_filtered_rules)
         self.search_reset_button = QPushButton("Reset")
         self.search_reset_button.clicked.connect(self.display_all_rules)
-
+        
+        
 
         self.search_engine = QWidget()
 
@@ -508,8 +805,7 @@ class MyGui(QMainWindow):
         search_engine_layout.addWidget(self.second_title_combobox,1,0,)
         search_engine_layout.addWidget(self.second_conditional_combobox,1,1)
         search_engine_layout.addWidget(self.second_search_input,1,2,)
-        search_engine_layout.addWidget(self.second_operator_combobox,1,3,1,2)
-        
+        search_engine_layout.addWidget(self.second_operator_combobox,1,3,1,2) 
 
         search_engine_layout.addWidget(self.third_title_combobox,2,0,)
         search_engine_layout.addWidget(self.third_conditional_combobox,2,1)
@@ -534,7 +830,7 @@ class MyGui(QMainWindow):
 
 
 
-#This is for the search engine element 
+#This is for the search engine dock element. 
 
         self.search_widget = QDockWidget("Search Engine",self)
         self.search_widget.setFloating(False)
@@ -624,7 +920,6 @@ class MyGui(QMainWindow):
         msg = QMessageBox(QMessageBox.Information, "Database created", "Initial database created successfully.", QMessageBox.Ok)
         x = msg.exec_()
 
-    
 
     def modify_network_config(self):
        
@@ -787,11 +1082,73 @@ class MyGui(QMainWindow):
                 for col_number, item in enumerate (data_row):
                         self.table_widget.setItem(row_number,col_number,QTableWidgetItem(str(item)))
 
+#This is for the filtered rules
+
     def display_filtered_rules(self):
 
            self.table_widget.clearContents()
 
-           final_Query = "" 
+           Queryheader_1 = str(self.first_title_combobox.currentText())
+           Queryconditional_1 = str(self.first_conditional_combobox.currentText())
+           Querysearchinput_1 = str(self.first_search_input.text())
+           Queryoperational_1 = str(self.first_operator_combobox.currentText())
+           
+           Queryheader_2 = str(self.second_title_combobox.currentText())
+           Queryconditional_2 = str(self.second_conditional_combobox.currentText())
+           Querysearchinput_2 = str(self.second_search_input.text())
+           Queryoperational_2 = str(self.second_operator_combobox.currentText())
+
+           Queryheader_3 = str(self.third_title_combobox.currentText())
+           Queryconditional_3 = str(self.third_conditional_combobox.currentText())
+           Querysearchinput_3 = str(self.third_search_input.text())
+           Queryoperational_3 = str(self.third_operator_combobox.currentText())
+
+           Queryheader_4 = str(self.fouth_title_combobox.currentText())
+           Queryconditional_4 = str(self.fourth_conditional_combobox.currentText())
+           Querysearchinput_4 = str(self.fourth_search_input.text())
+           Queryoperational_4 = str(self.fourth_operator_combobox.currentText())
+
+           Queryheader_5 = str(self.fifth_title_combobox.currentText())
+           Queryconditional_5 = str(self.fifth_conditional_combobox.currentText())
+           Querysearchinput_5 = str(self.fifth_search_input.text())
+           Queryoperational_5 = str(self.fifth_operator_combobox.currentText())
+
+           search().__class__.Queryheader_1 = Queryheader_1
+           search().__class__.Queryconditional_1 = Queryconditional_1
+           search().__class__.Querysearchinput_1 = Querysearchinput_1
+           search().__class__.Queryoperational_1 = Queryoperational_1
+
+           search().__class__.Queryheader_2 = Queryheader_2
+           search().__class__.Queryconditional_2 = Queryconditional_2
+           search().__class__.Querysearchinput_2 = Querysearchinput_2
+           search().__class__.Queryoperational_2 = Queryoperational_2
+
+           search().__class__.Queryheader_3 = Queryheader_3
+           search().__class__.Queryconditional_3 = Queryconditional_3
+           search().__class__.Querysearchinput_3 = Querysearchinput_3
+           search().__class__.Queryoperational_3 = Queryoperational_3
+
+           search().__class__.Queryheader_4 = Queryheader_4
+           search().__class__.Queryconditional_4 = Queryconditional_4
+           search().__class__.Querysearchinput_4 = Querysearchinput_4
+           search().__class__.Queryoperational_4 = Queryoperational_4
+
+           search().__class__.Queryheader_5 = Queryheader_5
+           search().__class__.Queryconditional_5 = Queryconditional_5
+           search().__class__.Querysearchinput_5 = Querysearchinput_5
+           search().__class__.Queryoperational_5 = Queryoperational_5
+      
+
+           result = database().get_data(search().create_query_line())
+
+           for row_number, data_row in enumerate (result):
+                for col_number, item in enumerate (data_row):
+                        self.table_widget.setItem(row_number,col_number,QTableWidgetItem(str(item)))
+           
+           search().clear_query_input() 
+
+           
+           
 
     
 
