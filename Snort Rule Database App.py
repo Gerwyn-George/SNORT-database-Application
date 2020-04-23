@@ -61,6 +61,8 @@ class database():
     password = "Forgotten07"
     database_name = "rules"
 
+    Last_Query = ""
+
     def __init__(self):
 
              #snort-database-application.c5acoc6h2uoc.eu-west-2.rds.amazonaws.com"
@@ -114,16 +116,12 @@ class database():
         self.disconnect_from_database() 
     
     def create_intial_database(self):
-        conn = mysql.connector.connect(host=self.hostname,user=self.user,passwd=self.password,database=self.database_name)
+        conn = mysql.connector.connect(host=self.hostname,user=self.user,passwd=self.password)
         cur = conn.cursor()
         cur.execute("CREATE DATABASE rules;")
         cur.execute("CREATE TABLE rules.rulesets (id INT AUTO_INCREMENT PRIMARY KEY, rulestatus VARCHAR(255), sid VARCHAR(255), rev VARCHAR(255), action VARCHAR(255), protocol VARCHAR(255), src_network VARCHAR(255), src_port VARCHAR(255), dst_network VARCHAR(255), dst_port VARCHAR(255), rule_body TEXT(65535))")
         self.disconnect_from_database() 
         MyGui.Show_database_created_box(self) 
-
-
-
-
 
 class Rule():
 
@@ -313,11 +311,15 @@ class Rule():
 
         connection = mysql.connector.connect(host="127.0.0.1",user="root",passwd="Forgotten07")
         sql_cursor = connection.cursor()
-        sql_cursor.execute("SELECT rule_body FROM rules.rulesets WHERE rulestatus ='Enabled'")
+
+        query = database().Last_Query
+        print(query)
+        sql_cursor.execute(query)
 
         Exportfile = open(outputfile, 'a')
         for x in sql_cursor:
-                Exportfile.write(str(x[0]))
+                Exportfile.write(str(x[10]))
+
 
         MyGui.show_export_success_box(self)
 
@@ -723,6 +725,8 @@ class MyGui(QMainWindow):
 
 #This is the configurations and specifications for the datatable.
 
+       
+
         self.table_widget = dataTable()
         self.setCentralWidget(self.table_widget)
         self.table_widget.setColumnCount(11)
@@ -731,6 +735,8 @@ class MyGui(QMainWindow):
         self.table_widget.setColumnWidth(8,120)
         self.table_widget.setColumnWidth(10,2000)
         self.table_widget.verticalHeader().setVisible(False)
+        
+        
 
 #This is the layout for the search engine. 
 
@@ -788,6 +794,7 @@ class MyGui(QMainWindow):
         self.fifth_operator_combobox.addItems(["","AND","OR"])
 
         self.search_filter_button = QPushButton("Filter")
+        
         self.search_filter_button.clicked.connect(self.display_filtered_rules)
         self.search_reset_button = QPushButton("Reset")
         self.search_reset_button.clicked.connect(self.display_all_rules)
@@ -1052,8 +1059,10 @@ class MyGui(QMainWindow):
 
             self.table_widget.clearContents()
          
+            query = "SELECT * FROM rules.rulesets"
+            database().__class__.Last_Query = query
 
-            result = database().get_data("SELECT * FROM rules.rulesets")
+            result = database().get_data(query)
         
             for row_number, data_row in enumerate (result):
                
@@ -1064,23 +1073,34 @@ class MyGui(QMainWindow):
     def display_enabled_rules(self):
       
             self.table_widget.clearContents()
-           
+
+            query = "SELECT * FROM rules.rulesets WHERE rulestatus ='Enabled'"
+            database().__class__.Last_Query = query
+
             result = database().get_data("SELECT * FROM rules.rulesets WHERE rulestatus ='Enabled'")
 
             for row_number, data_row in enumerate (result):
                
                 for col_number, item in enumerate (data_row):
                         self.table_widget.setItem(row_number,col_number,QTableWidgetItem(str(item)))
+                
+   
     
     def display_disabled_rules(self):
       
             self.table_widget.clearContents()
 
-            result = database().get_data("SELECT * FROM rules.rulesets WHERE rulestatus ='Disabled'")
+            query = "SELECT * FROM rules.rulesets WHERE rulestatus ='Disabled'"
+            database().__class__.Last_Query = query 
+            
+
+            result = database().get_data(query)
 
             for row_number, data_row in enumerate (result):
                 for col_number, item in enumerate (data_row):
                         self.table_widget.setItem(row_number,col_number,QTableWidgetItem(str(item)))
+
+         
 
 #This is for the filtered rules
 
@@ -1137,15 +1157,19 @@ class MyGui(QMainWindow):
            search().__class__.Queryconditional_5 = Queryconditional_5
            search().__class__.Querysearchinput_5 = Querysearchinput_5
            search().__class__.Queryoperational_5 = Queryoperational_5
-      
+          
+           query = search().create_query_line()
+           database().__class__.Last_Query = query
 
            result = database().get_data(search().create_query_line())
 
-           for row_number, data_row in enumerate (result):
+           for row_number, data_row in enumerate (result):   
+
                 for col_number, item in enumerate (data_row):
                         self.table_widget.setItem(row_number,col_number,QTableWidgetItem(str(item)))
            
            search().clear_query_input() 
+           
 
            
            
