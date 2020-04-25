@@ -31,6 +31,8 @@ from PySide2.QtWidgets import QGridLayout
 from PySide2.QtWidgets import QPushButton
 from PySide2.QtWidgets import QDockWidget 
 from PySide2.QtWidgets import QComboBox
+from PySide2.QtWidgets import QTextEdit
+from PySide2.QtWidgets import QCompleter
 
 
 from PySide2.QtCore import Qt
@@ -112,6 +114,7 @@ class database():
         conn = mysql.connector.connect(host=self.hostname,user=self.user,passwd=self.password,database=self.database_name)
         cur = conn.cursor()
         cur.execute(query)
+        conn.commit()
         
         self.disconnect_from_database() 
     
@@ -122,6 +125,16 @@ class database():
         cur.execute("CREATE TABLE rules.rulesets (id INT AUTO_INCREMENT PRIMARY KEY, rulestatus VARCHAR(255), sid VARCHAR(255), rev VARCHAR(255), action VARCHAR(255), protocol VARCHAR(255), src_network VARCHAR(255), src_port VARCHAR(255), dst_network VARCHAR(255), dst_port VARCHAR(255), rule_body TEXT(65535))")
         self.disconnect_from_database() 
         MyGui.Show_database_created_box(self) 
+
+    def collect_all_sids(self):
+        collect = self.get_data("SELECT sid FROM rules.rulesets")
+        result = []
+
+        for i in collect: 
+                result.append(i[0])
+        return result 
+        
+
 
 class Rule():
 
@@ -988,6 +1001,260 @@ class MyGui(QMainWindow):
 
         self.Config_window.setLayout(layout)
         self.Config_window.show() 
+
+    def display_details_in_modify_rule_box(self,query):
+        query = query + self.find_signature.text()
+       
+        result = database().get_data(query) 
+
+        rule_data = []
+
+        for i in result:
+                for j in i:
+                     rule_data.append(j)
+        
+        if rule_data[1] == "Enabled":
+        
+                self.select_rule_status.setCurrentIndex(0)
+
+        if rule_data[1] == "Disabled": 
+                self.select_rule_status.setCurrentIndex(1)
+
+
+        if rule_data[4] == "alert":
+                self.select_action.setCurrentIndex(1)
+        
+        if rule_data[4] == "log":
+                self.select_action.setCurrentIndex(2)
+
+        if rule_data[4] == "pass":
+                self.select_action.setCurrentIndex(3)
+
+        if rule_data[4] == "activate":
+                self.select_action.setCurrentIndex(4)
+        
+        if rule_data[4] == "dynamic":
+                self.select_action.setCurrentIndex(5)
+
+        
+        if rule_data[5] == "tcp":
+                self.select_protocol.setCurrentIndex(1)
+        if rule_data[5] == "udp":
+                self.select_protocol.setCurrentIndex(2)
+        if rule_data[5] == "icmp":
+                self.select_protocol.setCurrentIndex(3)
+
+        self.database_id = rule_data[0]
+
+        self.edit_signature_number.setText(rule_data[2])
+        self.edit_rev_number.setText(rule_data[3])
+
+        self.edit_destination_network.setText(rule_data[8])
+        self.edit_destination_port.setText(rule_data[9])
+
+        self.edit_source_network.setText(rule_data[6])
+        self.edit_source_port.setText(rule_data[7])
+
+        self.rule_edit.setText(rule_data[10])
+
+    def Okay_Modify_rule_box_to_db(self):
+        
+        source_port = self.edit_source_port.text()
+        source_network = self.edit_source_network.text()
+        destination_network = self.edit_destination_network.text()
+        destination_port = self.edit_destination_port.text() 
+
+        rev_number = self.edit_rev_number.text()
+        signature_number = self.edit_signature_number.text() 
+
+        rule_body = self.rule_edit.toPlainText()
+
+        protocol = self.select_protocol.currentText()
+        action = self.select_action.currentText()
+
+        rule_status = self.select_rule_status.currentText()
+
+        query = "UPDATE rules.rulesets SET rulestatus = " + "'"+ str(rule_status) +"'"+ "," + " sid = " + "'" + str(signature_number)+ "'" + "," + " rev = " +"'"+ str(rev_number)+"'" + "," + " action = "+"'"+ str(action)+"'" + "," + " protocol = " + "'"+str(protocol)+"'" + "," + " src_network = " + "'"+ str(source_network)+ "'" + "," + " src_port = " + "'" + str(source_port) + "'" + "," + " dst_network = " + "'"+ str(destination_network)+"'"+"," + " dst_port = " + "'"+ str(destination_port)+"'" + " WHERE id = " + str(self.database_id) + ";"
+   
+        database().execute_query(query)
+
+        regex_rule_body = re.search(r'\(.*?\)', rule_body)
+
+        rule_body=regex_rule_body.group(0)
+
+        signature_number = "sid:" + signature_number + ";"
+        rev_number = "rev:" + rev_number + ";"
+
+        rule_body = re.sub(r'(?i)(sid)\:\d+\;',signature_number,rule_body)
+
+        rule_body = re.sub(r'(?i)(rev)\:\d+\;',rev_number,rule_body)
+
+        reconstructed_rule = action + " " + protocol + " " + source_network + " " + source_port + " " + destination_network + " " + destination_port + " " + rule_body
+        
+        regex_Hashes = re.findall(r'^#',rule_body)
+
+        if rule_status == "Disabled":
+                reconstructed_rule = "# " + reconstructed_rule 
+
+        if rule_status == "Enabled":
+                pass 
+        
+        reconstructed_rule = reconstructed_rule.replace("'","''")
+
+        query = "UPDATE rules.rulesets SET rule_body = '"+ reconstructed_rule +"'"+ " WHERE id = " + str(self.database_id) + ";"
+       
+        database().execute_query(query)
+
+        query = "SELECT * FROM rules.rulesets WHERE sid = "  
+        self.display_details_in_modify_rule_box(query)
+        self.rule_modify_window.close() 
+        
+
+    def Apply_Modify_rule_box_to_db(self):
+        
+        source_port = self.edit_source_port.text()
+        source_network = self.edit_source_network.text()
+        destination_network = self.edit_destination_network.text()
+        destination_port = self.edit_destination_port.text() 
+
+        rev_number = self.edit_rev_number.text()
+        signature_number = self.edit_signature_number.text() 
+
+        rule_body = self.rule_edit.toPlainText()
+
+        protocol = self.select_protocol.currentText()
+        action = self.select_action.currentText()
+
+        rule_status = self.select_rule_status.currentText()
+
+        query = "UPDATE rules.rulesets SET rulestatus = " + "'"+ str(rule_status) +"'"+ "," + " sid = " + "'" + str(signature_number)+ "'" + "," + " rev = " +"'"+ str(rev_number)+"'" + "," + " action = "+"'"+ str(action)+"'" + "," + " protocol = " + "'"+str(protocol)+"'" + "," + " src_network = " + "'"+ str(source_network)+ "'" + "," + " src_port = " + "'" + str(source_port) + "'" + "," + " dst_network = " + "'"+ str(destination_network)+"'"+"," + " dst_port = " + "'"+ str(destination_port)+"'" + " WHERE id = " + str(self.database_id) + ";"
+   
+        database().execute_query(query)
+
+        regex_rule_body = re.search(r'\(.*?\)', rule_body)
+
+        rule_body=regex_rule_body.group(0)
+
+        signature_number = "sid:" + signature_number + ";"
+        rev_number = "rev:" + rev_number + ";"
+
+        rule_body = re.sub(r'(?i)(sid)\:\d+\;',signature_number,rule_body)
+
+        rule_body = re.sub(r'(?i)(rev)\:\d+\;',rev_number,rule_body)
+
+        reconstructed_rule = action + " " + protocol + " " + source_network + " " + source_port + " " + destination_network + " " + destination_port + " " + rule_body
+        
+        regex_Hashes = re.findall(r'^#',rule_body)
+
+        if rule_status == "Disabled":
+                reconstructed_rule = "# " + reconstructed_rule 
+
+        if rule_status == "Enabled":
+                pass 
+        
+        reconstructed_rule = reconstructed_rule.replace("'","''")
+
+        query = "UPDATE rules.rulesets SET rule_body = '"+ reconstructed_rule +"'"+ " WHERE id = " + str(self.database_id) + ";"
+       
+        database().execute_query(query)
+
+        query = "SELECT * FROM rules.rulesets WHERE sid = "  
+        self.display_details_in_modify_rule_box(query)
+
+    def Modify_rule_box(self):
+            complete_list = database().collect_all_sids()
+            
+            
+            self.rule_modify_window = QWidget()
+            self.rule_modify_window.setGeometry(450,250,1000,500)
+            self.rule_modify_window.setWindowTitle("Modify Rule")
+             
+            self.retrievebutton  = QPushButton("Retrive Rule")
+
+            self.find_signature = QLineEdit()
+            self.complete_signatures = QCompleter(complete_list)
+            self.find_signature.setCompleter(self.complete_signatures)
+
+            self.find_signature.text()
+
+            query = "SELECT * FROM rules.rulesets WHERE sid = " 
+        
+            self.retrievebutton.clicked.connect(lambda: self.display_details_in_modify_rule_box(query)) 
+            
+            self.Commit_rule_changes = QPushButton("OK")
+            self.Commit_rule_changes.clicked.connect(self.Okay_Modify_rule_box_to_db)
+
+            self.apply_rule_changes = QPushButton("Apply")
+            self.apply_rule_changes.clicked.connect(self.Apply_Modify_rule_box_to_db)
+
+            self.exit_modify_rules = QPushButton("Cancel")
+            self.exit_modify_rules.clicked.connect(self.close_modify_rule_box)
+        
+            self.select_rule_status = QComboBox()
+            self.select_rule_status.addItems(["Enabled","Disabled"])
+
+            self.select_action = QComboBox()
+            self.select_action.addItems(["","alert","log","pass","activate","dynamic"])
+
+            self.select_protocol = QComboBox()
+            self.select_protocol.addItems(["","tcp","udp","icmp"])
+
+            self.edit_signature_number = QLineEdit()
+            self.edit_rev_number = QLineEdit()
+
+            self.edit_destination_network = QLineEdit()
+            self.edit_destination_port = QLineEdit()
+            self.edit_source_network = QLineEdit()
+            self.edit_source_port = QLineEdit() 
+
+            self.rule_edit = QTextEdit() 
+
+            
+            layout = QGridLayout()
+
+            layout.addWidget(QLabel("Select rule"),1,0)
+            layout.addWidget(self.find_signature,1,1)
+            layout.addWidget(self.retrievebutton,1,2,1,2)
+
+            layout.addWidget(QLabel("Signature number:"),2,0)
+            layout.addWidget(self.edit_signature_number,2,1)
+
+            layout.addWidget(QLabel("Rev:"),2,2)
+            layout.addWidget(self.edit_rev_number,2,3)
+
+            layout.addWidget(QLabel("Rule Status:"),2,6,)
+            layout.addWidget(self.select_rule_status,2,7) 
+
+            layout.addWidget(QLabel("Action:"),3,0) 
+            layout.addWidget(self.select_action,3,1)
+            layout.addWidget(QLabel("Protocol:"),3,2)
+            layout.addWidget(self.select_protocol,3,3)
+
+            layout.addWidget(QLabel("Source Network:"),4,0)
+            layout.addWidget(self.edit_source_network,4,1) 
+
+            layout.addWidget(QLabel("Source Port:"),4,2)
+            layout.addWidget(self.edit_source_port,4,3)
+
+            layout.addWidget(QLabel("Destination Network:"),4,4)
+            layout.addWidget(self.edit_destination_network,4,5)
+
+            layout.addWidget(QLabel("Destination Port:"),4,6)
+            layout.addWidget(self.edit_destination_port,4,7)
+
+            layout.addWidget(QLabel("Rule Body:"),5,0)
+            layout.addWidget(self.rule_edit,6,0,1,8)
+            
+            layout.addWidget(self.Commit_rule_changes,7,7)
+            layout.addWidget(self.apply_rule_changes,7,5)
+            layout.addWidget(self.exit_modify_rules,7,3)
+
+
+            self.rule_modify_window.setLayout(layout)
+            self.rule_modify_window.show() 
+
+    def close_modify_rule_box(self):
+            self.rule_modify_window.close()
         
 #This specifies the top menu bar and its configuration. 
 
@@ -1005,10 +1272,14 @@ class MyGui(QMainWindow):
         
         exportruleaction = QAction("Export Ruleset", self)
         exportruleaction.triggered.connect(self.show_exportfile_box)
+
+        rulemodifyaction = QAction("Modify Rule", self)
+        rulemodifyaction.triggered.connect(self.Modify_rule_box)
+
         
         ruleMenu.addAction(importruleaction)
         ruleMenu.addAction(exportruleaction)
-
+        ruleMenu.addAction(rulemodifyaction)
 #This is for the view menu.
         displayallrulesaction = QAction("All rules",self)
         displayallrulesaction.triggered.connect(self.display_all_rules)
@@ -1169,14 +1440,6 @@ class MyGui(QMainWindow):
                         self.table_widget.setItem(row_number,col_number,QTableWidgetItem(str(item)))
            
            search().clear_query_input() 
-           
-
-           
-           
-
-    
-
-
 #This function loads the intial data into the table from the database and displays it.  
 
 app = QApplication(sys.argv)
