@@ -1,5 +1,6 @@
 import sys
 import re
+from threading import Thread
 from time import sleep
 
 import mysql.connector
@@ -51,15 +52,15 @@ enabled_import_counter = 0
 disabled_import_counter = 0
 
 #This global variable holds the import file variable
-inputfile = "community.rules"
+inputfile = ""
 outputfile = ""
 
 #This class specifies all parts of the snort rule. This allows for data to be stored in memory before transfering to database.
 
 class database():
 
-    hostname = "127.0.0.1" 
-    user = "root"
+    hostname = "snort-database-application-db.c5acoc6h2uoc.eu-west-2.rds.amazonaws.com"
+    user = "admin"
     password = "Forgotten07"
     database_name = "rules"
 
@@ -107,7 +108,6 @@ class database():
         query_result = cur.fetchall()
         self.disconnect_from_database() 
       
-        #print(query_result)
         return  query_result 
     
     def execute_query(self,query):
@@ -117,7 +117,16 @@ class database():
         conn.commit()
         
         self.disconnect_from_database() 
-    
+   
+    def execute_query_many(self,query,values):
+        conn = mysql.connector.connect(host=self.hostname,user=self.user,passwd=self.password,database=self.database_name)
+        cur = conn.cursor()
+        cur.executemany(query,values)
+        conn.commit()
+
+        self.disconnect_from_database()
+
+
     def create_intial_database(self):
         conn = mysql.connector.connect(host=self.hostname,user=self.user,passwd=self.password)
         cur = conn.cursor()
@@ -153,62 +162,12 @@ class Rule():
         self.exists_in_db = exists_in_db
 
 
-    def create_initial_database(self):
-        try:
-                connection = mysql.connector.connect(host="127.0.0.1",user="root",passwd="Forgotten07")
-      
-                if connection.is_connected():
-                        sql_cursor = connection.cursor()
-                        sql_cursor.execute("CREATE DATABASE rules")
-                        sql_cursor.execute("CREATE TABLE rules.rulesets (id INT AUTO_INCREMENT PRIMARY KEY, rulestatus VARCHAR(255), sid VARCHAR(255), rev VARCHAR(255), action VARCHAR(255), protocol VARCHAR(255), src_network VARCHAR(255), src_port VARCHAR(255), dst_network VARCHAR(255), dst_port VARCHAR(255), rule_body TEXT(65535))") 
-                        connection.close
-                        print("Database has been created")
-            
-        except mysql.connector.Error as error_text:
-        
-                if error_text.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-                        print("Can not connect to database.")     
 
-                else:
-                        print(error_text)
-        
-    def initial_load_data(self):
-        
-        try:
-                mydb = mysql.connector.connect(
-                host="localhost",
-                user="root",
-                passwd="Forgotten07",
-                database="rules")
+    def import_data_into_db(self):
+ 
+        new_rule_list =[] 
 
-                if mydb.is_connected():
-                        mycursor=mydb.cursor()
-                        mycursor.execute("SELECT * FROM rules.rulesets")
-                        result = mycursor.fetchall()
-
-                        for row_number, data_row in enumerate (result):
-                                for col_number, item in enumerate (data_row):
-                                        self.table_widget.setItem(row_number,col_number,QTableWidgetItem(str(item))) 
-                        
-                        mydb.close()
-
-                        
-        except mysql.connector.Error as error_text:
-                if error_text.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-                        print("Can not connect to database.")
-            
-                elif error_text.errno == errorcode.ER_BAD_DB_ERROR:
-                        print("Database does not exist.")
-                        self.create_initial_database()
-                        
-                else:
-                        print(error_text)
-    
-
-    def transfer_to_database(self):
-
-        connection = mysql.connector.connect(host="127.0.0.1",user="root",passwd="Forgotten07")
-        sql_cursor = connection.cursor()
+        insert_qry = "INSERT INTO rules.rulesets (rulestatus, sid, rev, action, protocol, src_network, src_port, dst_network, dst_port, rule_body) VALUES (%s,%s, %s, %s, %s, %s, %s, %s, %s, %s)"
 
         for rule in rule_list:
 
@@ -217,13 +176,18 @@ class Rule():
 
                 else:
                 
-                        insert_qry = "INSERT INTO rules.rulesets (rulestatus, sid, rev, action, protocol, src_network, src_port, dst_network, dst_port, rule_body) VALUES (%s,%s, %s, %s, %s, %s, %s, %s, %s, %s)"
                         values = (rule.rule_status, rule.sid, rule.rev, rule.action, rule.protocol, rule.src_network, rule.src_pt, rule.dst_network, rule.dst_pt,rule.rule_body)
-                        sql_cursor.execute(insert_qry, values)
-                        connection.commit()
-                        print("commit")
-        
-        connection.close()
+                        new_rule_list.append(values)
+                        
+        database().execute_query_many(insert_qry,new_rule_list)                  
+
+
+    def transfer_to_database(self):
+            background_task = Thread(target=Rule().import_data_into_db())
+            background_task.daemon  = True
+            background_task.start()
+
+
 
     def compare_database_to_rulelist(self):
 
@@ -240,22 +204,18 @@ class Rule():
     def get_sidrev_from_database(self):
 
         global sidrev
-        
-        connection = mysql.connector.connect(host="127.0.0.1",user="root",passwd="Forgotten07")
-        sql_cursor = connection.cursor()
-        
+
         sid_list = []
         rev_list = []
         
-
-        sql_cursor.execute("SELECT sid,rev FROM rules.rulesets")
+        result = database().get_data("SELECT sid,rev FROM rules.rulesets")
      
-        for x in sql_cursor:
+        for x in result:
 
                 sid_list.append(x[0])
                 rev_list.append(x[1])
         
-        connection.close()
+        database().disconnect_from_database() 
 
         sidrev = tuple(zip(sid_list,rev_list))
 
@@ -320,19 +280,15 @@ class Rule():
                 
 
     def export_ruleset(self):
-        global outputfile
-
-        connection = mysql.connector.connect(host="127.0.0.1",user="root",passwd="Forgotten07")
-        sql_cursor = connection.cursor()
-
+        
         query = database().Last_Query
         print(query)
-        sql_cursor.execute(query)
+
+        result = database().get_data(query)
 
         Exportfile = open(outputfile, 'a')
-        for x in sql_cursor:
+        for x in result:
                 Exportfile.write(str(x[10]))
-
 
         MyGui.show_export_success_box(self)
 
@@ -347,7 +303,7 @@ class Rule():
         Rule.compare_database_to_rulelist(self)
         Rule.transfer_to_database(self)
 
-        Rule.initial_load_data(self)
+        MyGui.display_all_rules(self)
         MyGui.show_import_success_box(self)
         rule_list.clear()
 
