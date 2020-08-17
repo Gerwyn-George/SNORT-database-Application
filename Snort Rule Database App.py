@@ -1,11 +1,17 @@
+#These are the default libraries which have been used by this application.
+
 import sys
 import re
 from threading import Thread
 from time import sleep
 
+#These are the MySQL libraries used for database connectivity. 
+
 import mysql.connector
 from mysql.connector import Error
 from mysql.connector import errorcode
+
+#These are the PySide libraries used for the GUI interface. 
 
 from PySide2.QtWidgets import QStatusBar
 from PySide2.QtWidgets import QTableView 
@@ -34,43 +40,50 @@ from PySide2.QtWidgets import QDockWidget
 from PySide2.QtWidgets import QComboBox
 from PySide2.QtWidgets import QTextEdit
 from PySide2.QtWidgets import QCompleter
-
-
 from PySide2.QtCore import Qt
 
 
 
-#This global variable holds rule class objects.
+#This global variable holds rule class objects. This is used when importing data into the database. 
 rule_list=[]
 sidrev =[]
 
-#These is the counters for the import function. 
+#These are the counters for the import function. 
 total_import_counter = 0
 ignore_import_counter = 0
 new_import_counter = 0
 enabled_import_counter = 0
 disabled_import_counter = 0
 
-#This global variable holds the import file variable
+#This global variable holds the import and export file variables.
 inputfile = ""
 outputfile = ""
 
-#This class specifies all parts of the snort rule. This allows for data to be stored in memory before transfering to database.
+#This class is responsible for the database connectivity, it stores database connection variables and the database functions to perform
+#connections and data push or retrieval.  
 
 class database():
 
+    #This is where the database variable connections are stored.
+
     hostname = "snort-database-application-db.c5acoc6h2uoc.eu-west-2.rds.amazonaws.com"
     user = "admin"
-    password = "Forgotten07"
+    password = "Password=1"
     database_name = "rules"
+
+    #This variable stores the users last defined query. 
 
     Last_Query = ""
 
     def __init__(self):
 
-             #snort-database-application.c5acoc6h2uoc.eu-west-2.rds.amazonaws.com"
+             
 
         self.database_status = "Ready"
+    
+    #All the functions specified below use the database variables specified earlier to perform their database functions. 
+
+    #This function allow for connection to the database. 
 
     def connect_to_database(self):
         try:
@@ -86,19 +99,33 @@ class database():
         except mysql.connector.Error as error_text:
 
                 if error_text.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-                        print("Can not connect to database.") 
-                           
+                        print("Credentials for the database are incorrect. ")
+                        self.user = input("Please type in the correct username: ")
+                        self.password = input("Please type in the correct password: ")
 
+                        self.connect_to_database() 
+                        
+                        
+                           
                 elif error_text.errno == errorcode.ER_BAD_DB_ERROR:
                         MyGui.Show_no_database_found_box(self)
+                
                                 
                 else:
-                        print(error_text)
+                        #print(error_text)
+                        print("Can not connect to database, please input the correct details and try again.")
+                        self.hostname = input("Please type in the database name or IP address for the database you wish to connect to: ")
+        
+                        self.connect_to_database()
+                        
+
+    #This function allows the application to disconnect from the database cleanly. 
 
     def disconnect_from_database(self):
         conn = mysql.connector.connect(host=self.hostname,user=self.user,passwd=self.password,database=self.database_name)
         conn.close() 
     
+    #This function retrives data from the database. 
 
     def get_data(self,query):
         self.connect_to_database()
@@ -110,6 +137,8 @@ class database():
       
         return  query_result 
     
+    #This function perfoms a database query.
+    
     def execute_query(self,query):
         conn = mysql.connector.connect(host=self.hostname,user=self.user,passwd=self.password,database=self.database_name)
         cur = conn.cursor()
@@ -117,6 +146,8 @@ class database():
         conn.commit()
         
         self.disconnect_from_database() 
+    
+    #This function performs a database query with multiple data.
    
     def execute_query_many(self,query,values):
         conn = mysql.connector.connect(host=self.hostname,user=self.user,passwd=self.password,database=self.database_name)
@@ -126,6 +157,7 @@ class database():
 
         self.disconnect_from_database()
 
+    #This function creates an intial database with a default layout if a database is not detected. 
 
     def create_intial_database(self):
         conn = mysql.connector.connect(host=self.hostname,user=self.user,passwd=self.password)
@@ -134,6 +166,8 @@ class database():
         cur.execute("CREATE TABLE rules.rulesets (id INT AUTO_INCREMENT PRIMARY KEY, rulestatus VARCHAR(255), sid VARCHAR(255), rev VARCHAR(255), action VARCHAR(255), protocol VARCHAR(255), src_network VARCHAR(255), src_port VARCHAR(255), dst_network VARCHAR(255), dst_port VARCHAR(255), rule_body TEXT(65535))")
         self.disconnect_from_database() 
         MyGui.Show_database_created_box(self) 
+
+    #This function finds all sids within the database. This is an unused function. 
 
     def collect_all_sids(self):
         collect = self.get_data("SELECT sid FROM rules.rulesets")
@@ -144,8 +178,11 @@ class database():
         return result 
         
 
+#This class is for the data collected from the rules and its related functions. 
 
 class Rule():
+
+    #This is the defining the value of each part of the rule as an object. 
 
     def __init__(self,rule_status="",sid="",rev="",action="",protocol="",src_network="",src_pt="",dst_network="",dst_pt="",rule_body="", exists_in_db=False):
         self.rule_status = rule_status 
@@ -159,9 +196,11 @@ class Rule():
         self.dst_pt = dst_pt
         self.rule_body = rule_body 
 
+
         self.exists_in_db = exists_in_db
 
 
+    #This function imports the rule into the database after checking if it already exsists in the database. 
 
     def import_data_into_db(self):
  
@@ -180,14 +219,15 @@ class Rule():
                         new_rule_list.append(values)
                         
         database().execute_query_many(insert_qry,new_rule_list)                  
-
+    
+    #This function allows the rules to transfered into the database as a thread.
 
     def transfer_to_database(self):
             background_task = Thread(target=Rule().import_data_into_db())
             background_task.daemon  = True
             background_task.start()
 
-
+    #This function is the function responsible for checking if the rule exisits in the database and if the rev is higher before adding it to the database.
 
     def compare_database_to_rulelist(self):
 
@@ -200,6 +240,7 @@ class Rule():
                             if i.sid == int(j[0]) and i.rev <= int(j[1]):
                                 i.exists_in_db = True
                        
+    #This function retrives the current sid and rev values from the database so checks can be made for exsisiting rules. 
 
     def get_sidrev_from_database(self):
 
@@ -218,7 +259,8 @@ class Rule():
         database().disconnect_from_database() 
 
         sidrev = tuple(zip(sid_list,rev_list))
-
+    
+    #This function breaks down the rules from input into a usable form for the database, this is part of the import process. 
     def create_list(self):
         global inputfile
 
@@ -279,6 +321,7 @@ class Rule():
                                         rule_list.append( Rule(rule_status, sid_int, rev_int, action_str, protocol_str, src_network_str, src_pt_str, dst_network_str, dst_network_pt_str, signature))
                 
 
+    #This exports all rules displayed from the last user inputted query as a ruleset. 
     def export_ruleset(self):
         
         query = database().Last_Query
@@ -295,6 +338,8 @@ class Rule():
 
 # This is the function to import rulesets. 
 
+
+    #This function combines the previous import functions and displays graphical windows on completion. 
     def inport_ruleset(self):
         global inputfile
 
@@ -307,8 +352,10 @@ class Rule():
         MyGui.show_import_success_box(self)
         rule_list.clear()
 
-#This is all the functions for the search engine. 
+#This class is for the search engine and its related functions. 
 class search():
+
+    #These variables are to store user search input. 
     
     Queryheader_1 = ""
     Queryconditional_1 = ""
@@ -336,7 +383,7 @@ class search():
     Queryoperational_5 = ""
 
 
-
+    #This function clears all user search input in memory. 
 
     def clear_query_input(self):
         Queryheader_1 = ""
@@ -365,7 +412,10 @@ class search():
         Queryoperational_5 = ""
         
 
+#This function takes the user input and uses it to construct usable queries to extract data from the database. 
     def create_query_line(self):
+        
+        #These variables are for storing the input, which is collected from the search input. 
         
         header1 = ""
         header2 = ""
@@ -398,6 +448,8 @@ class search():
         header5 = self.Queryheader_5 
         conditional5 = self.Queryconditional_5 
         input5 = self.Querysearchinput_5
+
+        #These conditionals are used to change the inputted text into the names of the headers within the database. 
 
         if header1 == "Rule Status":
                 header1 = "rulestatus"
@@ -557,6 +609,8 @@ class search():
 
 #Rule Status","Signature ID","Revison","Action","Protocol","Source Network","Source Port","Destination Network","Destination Port","Rule Body 
 
+        #Here all the collected input is put together as a useable query which will retrieve data. 
+
         Query_AND_1 =""
         Query_AND_2 =""
         Query_AND_3 =""
@@ -677,16 +731,21 @@ class search():
 
         
 
+#The datatable class provides the table interface for this this application. 
+
 class dataTable(QTableWidget):
     def __init__(self):
         super().__init__()
          
         self.show()
 
+#This class provides the functions and defines the main application window.
 
 class MyGui(QMainWindow):
     def __init__(self):
         super().__init__()
+
+#This configures the settings for the main application.
 
         self.setWindowTitle("SNORT Database application")
         self.setMinimumSize(1200, 600)
@@ -694,12 +753,11 @@ class MyGui(QMainWindow):
 
 #This is the configurations and specifications for the datatable.
 
-       
 
         self.table_widget = dataTable()
         self.setCentralWidget(self.table_widget)
         self.table_widget.setColumnCount(11)
-        self.table_widget.setRowCount(4000)
+        self.table_widget.setRowCount(99999)
         self.table_widget.setHorizontalHeaderLabels(('ID', 'Rule status', 'Signature ID', 'Revision', 'Action', 'Protocol','Source Network', 'Source Port','Destination Network', 'Destination Port','Rule Body'))
         self.table_widget.setColumnWidth(8,120)
         self.table_widget.setColumnWidth(10,2000)
@@ -710,62 +768,84 @@ class MyGui(QMainWindow):
 #This is the layout for the search engine. 
 
         self.first_title_combobox = QComboBox()
+        self.first_title_combobox.setToolTip("Set search criteria.")
         self.first_title_combobox.addItems(["","Rule Status","Signature ID","Revison","Action","Protocol","Source Network","Source Port","Destination Network","Destination Port","Rule Body"])
 
         self.second_title_combobox = QComboBox()
+        self.second_title_combobox.setToolTip("Set search criteria.")
         self.second_title_combobox.addItems(["","Rule Status","Signature ID","Revison","Action","Protocol","Source Network","Source Port","Destination Network","Destination Port","Rule Body"])
 
         self.third_title_combobox = QComboBox()
+        self.third_title_combobox.setToolTip("Set search criteria.")
         self.third_title_combobox.addItems(["","Rule Status","Signature ID","Revison","Action","Protocol","Source Network","Source Port","Destination Network","Destination Port","Rule Body"])
 
         self.fouth_title_combobox = QComboBox()
+        self.fouth_title_combobox.setToolTip("Set search criteria.")
         self.fouth_title_combobox.addItems(["","Rule Status","Signature ID","Revison","Action","Protocol","Source Network","Source Port","Destination Network","Destination Port","Rule Body"])
 
         self.fifth_title_combobox = QComboBox()
+        self.fifth_title_combobox.setToolTip("Set search criteria.")
         self.fifth_title_combobox.addItems(["","Rule Status","Signature ID","Revison","Action","Protocol","Source Network","Source Port","Destination Network","Destination Port","Rule Body"])
 
         self.first_conditional_combobox = QComboBox()
+        self.first_conditional_combobox.setToolTip("Set comparison here.")
         self.first_conditional_combobox.addItems(["","=","!=","<",">","<=",">="])
 
         self.second_conditional_combobox = QComboBox() 
+        self.second_conditional_combobox.setToolTip("Set comparision here.")
         self.second_conditional_combobox.addItems(["","=","!=","<",">","<=",">="])
 
         self.third_conditional_combobox = QComboBox()
+        self.third_conditional_combobox.setToolTip("Set comparison here.")
         self.third_conditional_combobox.addItems(["","=","!=","<",">","<=",">="])
 
 
         self.fourth_conditional_combobox = QComboBox()
+        self.fourth_conditional_combobox.setToolTip("Set comparison here.")
         self.fourth_conditional_combobox.addItems(["","=","!=","<",">","<=",">="])
 
         self.fifth_conditional_combobox = QComboBox()
+        self.fifth_conditional_combobox.setToolTip("Set comparison here.")
         self.fifth_conditional_combobox.addItems(["","=","!=","<",">","<=",">="])
 
 
         self.first_search_input = QLineEdit()
+        self.first_search_input.setToolTip("Input search text here.")
         self.second_search_input = QLineEdit()
+        self.second_search_input.setToolTip("Input search text here.")
         self.third_search_input = QLineEdit()
+        self.third_search_input.setToolTip("Input search text here.")
         self.fourth_search_input = QLineEdit()
+        self.fourth_search_input.setToolTip("Input search text here.")
         self.fifth_search_input = QLineEdit() 
+        self.fifth_search_input.setToolTip("Input search text here.")
 
         self.first_operator_combobox = QComboBox()
+        self.first_operator_combobox.setToolTip("Set 'And' or 'Or' Operator here.")
         self.first_operator_combobox.addItems(["","AND","OR"])
        
         self.second_operator_combobox = QComboBox()
+        self.second_operator_combobox.setToolTip("Set 'And' or 'Or' Operator here.")
         self.second_operator_combobox.addItems(["","AND","OR"])
 
         self.third_operator_combobox = QComboBox()
+        self.third_operator_combobox.setToolTip("Set 'And' or 'Or' Operator here.")
         self.third_operator_combobox.addItems(["","AND","OR"])
 
         self.fourth_operator_combobox = QComboBox()
+        self.fourth_operator_combobox.setToolTip("Set 'And' or 'Or' Operator here.")
         self.fourth_operator_combobox.addItems(["","AND","OR"])
 
         self.fifth_operator_combobox = QComboBox()
+        self.fifth_operator_combobox.setToolTip("Set 'And' or 'Or' Operator here.")
         self.fifth_operator_combobox.addItems(["","AND","OR"])
 
         self.search_filter_button = QPushButton("Filter")
-        
+        self.search_filter_button.setToolTip("Filters rule data to user specification.")
         self.search_filter_button.clicked.connect(self.display_filtered_rules)
+
         self.search_reset_button = QPushButton("Reset")
+        self.search_reset_button.setToolTip("Resets displayed rule data to default display (All rules in database).")
         self.search_reset_button.clicked.connect(self.display_all_rules)
         
         
@@ -824,6 +904,8 @@ class MyGui(QMainWindow):
         self.create_menu()
         self.Statusbar()
         self.display_all_rules() 
+
+#This function shows the database config box. 
         
     def show_database_config_box(self):
 
@@ -842,7 +924,7 @@ class MyGui(QMainWindow):
         x = msg.exec_()
 
 
-#These need to be completed and refined. 
+#This displays the inport file box. 
     def show_importfile_box(self):
         global inputfile
         
@@ -853,7 +935,7 @@ class MyGui(QMainWindow):
                 inputfile =str(inputfile[0])
                 Rule.inport_ruleset(self)
 
-#This works, needs refinement, error checking
+#This displays the export file box.
     def show_exportfile_box(self):
         global outputfile
 
@@ -863,6 +945,7 @@ class MyGui(QMainWindow):
                 outputfile = str(outputfile[0])
                 Rule.export_ruleset(self)
 
+#This displays the import sucess box. 
     def show_import_success_box(self):
         global total_import_counter
         global ignore_import_counter
@@ -873,10 +956,12 @@ class MyGui(QMainWindow):
         msg = QMessageBox(QMessageBox.Information, "Import Results", "Attempted to import %s rules. \n%s rules already in database and have not been added.\n%s new rules have been added to database. \n%s of these rules are in an enabled state.\n%s of these rules are in a disabled state." % (total_import_counter,ignore_import_counter,new_import_counter,enabled_import_counter,disabled_import_counter), QMessageBox.Ok)
         x = msg.exec_()
 
+#This displays the export sucess box. 
     def show_export_success_box(self):
         msg = QMessageBox(QMessageBox.Information, "Ruleset Creation Successful", "Ruleset successfully created.",QMessageBox.Ok)
         x = msg.exec_()
 
+#This displays the no database found box. 
     def Show_no_database_found_box(self):
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Warning)
@@ -892,11 +977,12 @@ class MyGui(QMainWindow):
         else:
                 pass 
 
+#This displays the database created box. 
     def Show_database_created_box(self):
         msg = QMessageBox(QMessageBox.Information, "Database created", "Initial database created successfully.", QMessageBox.Ok)
         x = msg.exec_()
 
-
+#This shows the modify network config box.
     def modify_network_config(self):
        
        new_host = str(self.ammend_hostname.text())
@@ -910,9 +996,11 @@ class MyGui(QMainWindow):
        database().__class__.password = new_password
        self.Config_window.close() 
 
+#This function closes the network config box. 
     def close_network_config(self):
         self.Config_window.close()
 
+#This function displays the configure database box. 
     def Configure_database_box(self):
         self.Config_window = QWidget() 
         self.Config_window.setWindowTitle("Configure Database")
@@ -958,6 +1046,7 @@ class MyGui(QMainWindow):
         self.Config_window.setLayout(layout)
         self.Config_window.show() 
 
+#This function sets the data displayed in the modify rule box. 
     def display_details_in_modify_rule_box(self,query):
         query = query + self.find_signature.text()
        
@@ -1013,6 +1102,7 @@ class MyGui(QMainWindow):
 
         self.rule_edit.setText(rule_data[10])
 
+#This function applies the changes to the rules and exits. 
     def Okay_Modify_rule_box_to_db(self):
         
         source_port = self.edit_source_port.text()
@@ -1065,7 +1155,7 @@ class MyGui(QMainWindow):
         self.display_details_in_modify_rule_box(query)
         self.rule_modify_window.close() 
         
-
+#Thi function applies the changes made to the modify rule. 
     def Apply_Modify_rule_box_to_db(self):
         
         source_port = self.edit_source_port.text()
@@ -1117,6 +1207,7 @@ class MyGui(QMainWindow):
         query = "SELECT * FROM rules.rulesets WHERE sid = "  
         self.display_details_in_modify_rule_box(query)
 
+#This displays the modify rule box. 
     def Modify_rule_box(self):
             complete_list = database().collect_all_sids()
             
@@ -1209,41 +1300,55 @@ class MyGui(QMainWindow):
             self.rule_modify_window.setLayout(layout)
             self.rule_modify_window.show() 
 
+#This function closes the modify rule box. 
     def close_modify_rule_box(self):
             self.rule_modify_window.close()
         
 #This specifies the top menu bar and its configuration. 
-
     def create_menu(self):
         mainMenu = self.menuBar()
-        fileMenu = mainMenu.addMenu("File")
+        
+        #fileMenu = mainMenu.addMenu("File")
         ruleMenu = mainMenu.addMenu("Rule")
+        ruleMenu.setToolTipsVisible(True)
         viewMenu = mainMenu.addMenu("View")
+        viewMenu.setToolTipsVisible(True)
         configMenu = mainMenu.addMenu("Config")
+        configMenu.setToolTipsVisible(True)
         helpMenu = mainMenu.addMenu("Help")
+        helpMenu.setToolTipsVisible(True)
 
 #This is for the rule menu.
         importruleaction = QAction("Import Ruleset", self)
+        importruleaction.setToolTip("Import ruleset into the application database.")
         importruleaction.triggered.connect(self.show_importfile_box)
         
+        
         exportruleaction = QAction("Export Ruleset", self)
+        exportruleaction.setToolTip("Export rule(s) displayed in table to .rules or .txt file.")
         exportruleaction.triggered.connect(self.show_exportfile_box)
+        
 
         rulemodifyaction = QAction("Modify Rule", self)
+        rulemodifyaction.setToolTip("Modify rule currently in application database.")
         rulemodifyaction.triggered.connect(self.Modify_rule_box)
 
         
         ruleMenu.addAction(importruleaction)
         ruleMenu.addAction(exportruleaction)
         ruleMenu.addAction(rulemodifyaction)
+
 #This is for the view menu.
         displayallrulesaction = QAction("All rules",self)
+        displayallrulesaction.setToolTip("Shows all rules in application database.")
         displayallrulesaction.triggered.connect(self.display_all_rules)
         
         displayenabledrulesaction = QAction("Enabled rules",self)
+        displayenabledrulesaction.setToolTip("Shows all enabled rules in application database.")
         displayenabledrulesaction.triggered.connect(self.display_enabled_rules)
 
         displaydisabledrulesaction = QAction("Disabled rules",self)
+        displaydisabledrulesaction.setToolTip("Shows all disabled rules in application database.")
         displaydisabledrulesaction.triggered.connect(self.display_disabled_rules)
         
         viewMenu.addAction(displayallrulesaction)
@@ -1252,13 +1357,16 @@ class MyGui(QMainWindow):
         
 #This is for the configure menu.
         display_serversettingsruleaction = QAction("Display Database connection settings", self)
+        display_serversettingsruleaction.setToolTip("Displays the current database connection settings.")
         display_serversettingsruleaction.triggered.connect(self.show_database_config_box)
 
         modify_serversettingsruleaction = QAction("Modify Database connection settings",self)
+        modify_serversettingsruleaction.setToolTip("Modifies the current database connection settings.")
         modify_serversettingsruleaction.triggered.connect(self.Configure_database_box)
         
 
         testconnectionruleaction = QAction("Test server connection",self)
+        testconnectionruleaction.setToolTip("Performs a connection test to set application database.")
 
         configMenu.addAction(modify_serversettingsruleaction)
         configMenu.addAction(display_serversettingsruleaction)
@@ -1266,22 +1374,23 @@ class MyGui(QMainWindow):
 
 #This is for the options which drop down for the Help menu.
         howtoaction = QAction("How to", self)
+        howtoaction.setToolTip("This provides a link to user help resources.")
 
         aboutaction = QAction("About", self)
+        aboutaction.setToolTip("Displays information about this application.")
         aboutaction.triggered.connect(self.show_about_box)
 
         helpMenu.addAction(howtoaction)
         helpMenu.addAction(aboutaction)
 
 #This specifies the configuration for the statusbar.
-
     def Statusbar(self):
         
         status = QStatusBar()
         status.showMessage(database().database_status)
         self.setStatusBar(status)
 
-
+#This function displays all rules in the main table.  
     def display_all_rules(self):
 
             self.table_widget.clearContents()
@@ -1296,7 +1405,7 @@ class MyGui(QMainWindow):
                 for col_number, item in enumerate (data_row):
                         self.table_widget.setItem(row_number,col_number,QTableWidgetItem(str(item))) 
 
-    
+#This function displays all enabled rules in the main table. 
     def display_enabled_rules(self):
       
             self.table_widget.clearContents()
@@ -1312,7 +1421,7 @@ class MyGui(QMainWindow):
                         self.table_widget.setItem(row_number,col_number,QTableWidgetItem(str(item)))
                 
    
-    
+#This rule displays all the disabled rules in the main table. 
     def display_disabled_rules(self):
       
             self.table_widget.clearContents()
@@ -1329,8 +1438,7 @@ class MyGui(QMainWindow):
 
          
 
-#This is for the filtered rules
-
+#This function displays all the rules based upon the search settings in the search tool. 
     def display_filtered_rules(self):
 
            self.table_widget.clearContents()
@@ -1396,8 +1504,8 @@ class MyGui(QMainWindow):
                         self.table_widget.setItem(row_number,col_number,QTableWidgetItem(str(item)))
            
            search().clear_query_input() 
-#This function loads the intial data into the table from the database and displays it.  
-
+  
+#This initiates the application. 
 app = QApplication(sys.argv)
 mygui = MyGui()
  
