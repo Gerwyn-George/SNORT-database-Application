@@ -1,5 +1,5 @@
 # Snort-database-application
-Final Year project (Information and Communications Technology Degree): SNORT database Application.
+Final Year project (Information and Communications Technology Degree): Snort database application.
 
 Python database application created as a submission for my final project for the Information and Communications Technology degree @ Staffordshire University. There was a requirement for an application to replace a solution currently in use, which was hindering the critical process of creating and deploying custom SNORT rulesets. 
 
