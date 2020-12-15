@@ -1,7 +1,7 @@
 # SNORT-database-Application
 Final Year project (Information and Communications Technology Degree): SNORT database Application.
 
-Final year project created as the final project of my Information and Communications Technology degree. There was a requirement for an application to replace a solution currently in use, but was slowing the process of creating custom rulesets based upon user criteron.  
+Python database application created as a submission for my final project for the Information and Communications Technology degree @ Staffordshire University. There was a requirement for an application to replace a solution currently in use, which was hindering the critical process of creating and deploying custom SNORT rulesets. 
 
 As part of this project, user requirements were gathered, technologies suitable for the project was researched, an application designed, and an application created which could replace the current application. 
 
